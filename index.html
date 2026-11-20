@@ -2,173 +2,373 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Anthropic Employee Wealth | JS Labs</title>
+<meta name="description" content="Paper valuations of Anthropic employee equity, recalculated at any share price. Export as CSV, JSON, image, or PDF.">
+<meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151614" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wealth">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 :root {
-  --paper: #f5f4f0;
-  --ink: #111111;
-  --ink-60: rgba(17,17,17,0.6);
-  --ink-12: rgba(17,17,17,0.12);
-  --ink-07: rgba(17,17,17,0.07);
-  --border: rgba(17,17,17,0.12);
-  --pos-text: #146c43;
-  --pos-bg: #edf7f1;
-  --neg-text: #b42318;
-  --neg-bg: #fef3f2;
+  color-scheme: light dark;
+  --font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-rounded: "Geist Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg: #f5f4f0;
+  --card: #fafaf8;
+  --fill: rgba(0, 0, 0, 0.05);
+  --fill-strong: rgba(0, 0, 0, 0.1);
+  --label: #111111;
+  --label-2: rgba(0, 0, 0, 0.6);
+  --label-3: rgba(0, 0, 0, 0.3);
+  --sep: rgba(0, 0, 0, 0.12);
+  --tint: #111111;
+  --green: #2f6b3a;
+  --green-bg: rgba(47, 107, 58, 0.12);
+  --red: #a3322a;
+  --red-bg: rgba(163, 50, 42, 0.1);
+  --nav: rgba(245, 244, 240, 0.85);
+  --sheet: rgba(250, 250, 248, 0.92);
+  --sheet-sep: rgba(0, 0, 0, 0.1);
+  --seg-active: #111111;
+  --seg-active-fg: #ffffff;
+  --seg-shadow: none;
+  --toast: rgba(17, 17, 17, 0.94);
+  --toast-fg: #f5f4f0;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151614;
+    --card: #22241f;
+    --fill: rgba(245, 244, 236, 0.07);
+    --fill-strong: rgba(245, 244, 236, 0.15);
+    --label: #eeede6;
+    --label-2: rgba(245, 244, 236, 0.62);
+    --label-3: rgba(245, 244, 236, 0.3);
+    --sep: rgba(245, 244, 236, 0.12);
+    --tint: #eeede6;
+    --green: #8fd19e;
+    --green-bg: rgba(143, 209, 158, 0.12);
+    --red: #f2a097;
+    --red-bg: rgba(242, 160, 151, 0.12);
+    --nav: rgba(21, 22, 20, 0.85);
+    --sheet: rgba(36, 38, 32, 0.94);
+    --sheet-sep: rgba(245, 244, 236, 0.1);
+    --seg-active: #eeede6;
+    --seg-active-fg: #181a15;
+    --seg-shadow: none;
+    --toast: rgba(238, 237, 230, 0.96);
+    --toast-fg: #181a15;
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg);
+}
 body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: 'Geist', system-ui, sans-serif;
-  line-height: 1.5;
-  padding: 1.5rem 1rem 2.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
 }
-header {
-  margin-bottom: 1.5rem;
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
-h1 {
-  font-family: 'IBM Plex Sans', sans-serif;
+button:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 2px solid var(--tint);
+  outline-offset: 2px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Navigation bar */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: var(--safe-top);
+  background: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.navbar.scrolled {
+  background: var(--nav);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 0.5px 0 var(--sep);
+}
+.navbar-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 44px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 calc(8px + var(--safe-right)) 0 calc(8px + var(--safe-left));
+}
+.nav-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+.navbar.scrolled .nav-title {
+  opacity: 1;
+  transform: none;
+}
+.nav-btn {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--tint);
+  font-size: 17px;
+  border-radius: 10px;
+  transition: opacity 0.15s ease;
+}
+.nav-btn:active { opacity: 0.4; }
+.nav-btn svg { width: 22px; height: 22px; }
+
+/* Content */
+.content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 calc(16px + var(--safe-right)) calc(32px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+.large-title {
+  padding: 2px 4px 20px;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-weight: 500;
-  font-size: 1.5rem;
+  color: var(--label-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.brand-mark {
+  display: block;
+  width: 30px;
+  height: 16px;
+  color: var(--label);
+  flex-shrink: 0;
+}
+.nav-brand {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--label);
+  border-radius: 10px;
+}
+.nav-brand .brand-mark { width: 34px; height: 18px; }
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 0 8px;
+  color: var(--label);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.footer-brand:active { opacity: 0.5; }
+h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.12;
+  margin-top: 2px;
 }
 .sub {
-  color: var(--ink-60);
-  font-size: 0.875rem;
-  margin-top: 0.35rem;
+  color: var(--label-2);
+  font-size: 15px;
+  margin-top: 6px;
+  text-wrap: pretty;
 }
-.price-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.125rem 1.25rem;
-  margin-bottom: 1.5rem;
-}
-.price-card-top {
+
+/* Grouped sections */
+.group { margin-bottom: 28px; }
+.group-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.875rem;
+  gap: 12px;
+  padding: 0 16px 7px;
+  min-height: 24px;
 }
-.price-label {
-  font-size: 0.75rem;
-  color: var(--ink-60);
+.group-header h2, .group-header label {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--label-2);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
+  letter-spacing: 0.01em;
 }
-.delta-pill {
-  font-family: 'Geist Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  background: var(--ink-07);
-  color: var(--ink-60);
-  font-variant-numeric: tabular-nums;
+.group-header h2.big {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--label);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  padding: 0;
 }
-.delta-pill.positive {
-  background: var(--pos-bg);
-  color: var(--pos-text);
+.group-header.big-wrap { padding: 0 4px 10px; }
+.text-btn {
+  color: var(--tint);
+  font-size: 15px;
+  min-height: 44px;
+  margin: -14px -8px -10px 0;
+  padding: 0 8px;
+  transition: opacity 0.15s ease;
 }
-.delta-pill.negative {
-  background: var(--neg-bg);
-  color: var(--neg-text);
+.text-btn:active { opacity: 0.4; }
+.text-btn:disabled { color: var(--label-3); cursor: default; }
+.group-footer {
+  padding: 8px 16px 0;
+  font-size: 13px;
+  color: var(--label-2);
 }
-.price-input-row {
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Price card */
+.price-card { padding: 14px 16px 16px; }
+.price-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 12px;
 }
 .price-field {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex: 1;
   min-width: 0;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0 0.875rem;
-  min-height: 48px;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
-.price-field:focus-within {
-  border-color: var(--ink);
-  background: white;
-}
-.currency-prefix {
-  font-family: 'Geist Mono', monospace;
-  font-size: 1.375rem;
-  font-weight: 500;
-  color: var(--ink-60);
-  margin-right: 0.25rem;
-  user-select: none;
+.currency {
+  font-family: var(--font-rounded);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--label-2);
+  margin-right: 2px;
 }
 .price-input {
   width: 100%;
   min-width: 0;
   border: none;
   background: transparent;
-  color: var(--ink);
-  font-family: 'Geist Mono', monospace;
-  font-size: 1.375rem;
-  font-weight: 500;
+  color: var(--label);
+  font-family: var(--font-rounded);
+  font-size: 40px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   outline: none;
-  padding: 0.5rem 0;
+  padding: 0;
+  caret-color: var(--tint);
 }
-.step-btn, .reset-btn {
+.price-input:focus-visible { outline: none; }
+.price-field:focus-within .currency { color: var(--tint); }
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--fill);
+  border-radius: 9px;
+  height: 36px;
+}
+.stepper button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 48px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: white;
-  color: var(--ink);
-  font-family: 'Geist Mono', monospace;
-  font-size: 1.125rem;
-  font-weight: 500;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  width: 48px;
+  height: 44px;
+  margin: -4px 0;
+  color: var(--label);
+  border-radius: 9px;
+  transition: background-color 0.1s ease;
 }
-.step-btn:hover, .reset-btn:hover {
-  background: var(--paper);
-  border-color: rgba(17,17,17,0.28);
+.stepper button:active { background: var(--fill-strong); }
+.stepper button svg { width: 18px; height: 18px; }
+.stepper-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--sep);
 }
-.step-btn:active, .reset-btn:active {
-  background: var(--ink-07);
+.delta {
+  display: inline-flex;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--fill);
+  color: var(--label-2);
 }
-.reset-btn {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 0.8125rem;
-  padding: 0 0.875rem;
-  color: var(--ink-60);
-}
-.reset-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.reset-btn:disabled:hover {
-  background: white;
-  border-color: var(--border);
-}
-.slider-wrap {
-  margin-bottom: 1rem;
-}
+.delta.positive { background: var(--green-bg); color: var(--green); }
+.delta.negative { background: var(--red-bg); color: var(--red); }
+
+.slider-wrap { margin-top: 16px; }
 .price-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -177,442 +377,616 @@ h1 {
   background: transparent;
   cursor: pointer;
   touch-action: pan-y;
+  --pct: 30%;
 }
+.price-slider:focus-visible { outline: none; }
+.price-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--tint); }
 .price-slider::-webkit-slider-runnable-track {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--ink-07);
+  background: linear-gradient(to right, var(--tint) 0 var(--pct), var(--fill-strong) var(--pct) 100%);
 }
 .price-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--ink);
-  border: 3px solid white;
-  box-shadow: 0 1px 4px rgba(17,17,17,0.28);
-  margin-top: -9px;
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.12), 0 6px 13px rgba(0, 0, 0, 0.12);
+  margin-top: -12px;
 }
 .price-slider::-moz-range-track {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--ink-07);
+  background: var(--fill-strong);
+}
+.price-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--tint);
 }
 .price-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--ink);
-  border: 3px solid white;
-  box-shadow: 0 1px 4px rgba(17,17,17,0.28);
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 0.5px 4px rgba(0, 0, 0, 0.12), 0 6px 13px rgba(0, 0, 0, 0.12);
 }
 .slider-scale {
   display: flex;
   justify-content: space-between;
-  font-family: 'Geist Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--ink-60);
-  margin-top: -0.15rem;
+  font-size: 12px;
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
 }
-.presets {
+
+.segmented {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  margin-top: 16px;
+  padding: 2px;
+  background: var(--fill);
+  border-radius: 9px;
 }
-.preset-btn {
-  display: inline-flex;
+.segmented button {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0 0.875rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--ink);
-  font-family: 'Geist Mono', monospace;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  padding: 4px 2px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
-.preset-btn:hover {
-  background: var(--paper);
+.segmented button small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--label-2);
 }
-.preset-btn.active {
-  background: var(--ink);
-  color: white;
-  border-color: var(--ink);
+.segmented button[aria-pressed="true"] {
+  background: var(--seg-active);
+  color: var(--seg-active-fg);
+  box-shadow: var(--seg-shadow);
+  font-weight: 600;
 }
-.preset-btn span {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 0.75rem;
-  opacity: 0.72;
-  margin-left: 0.35rem;
+.segmented button[aria-pressed="true"] small {
+  color: inherit;
+  opacity: 0.75;
 }
+
+/* KPIs */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 2rem;
+  gap: 10px;
+  margin-bottom: 28px;
 }
 .kpi {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1rem 1.125rem;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px 14px;
 }
 .kpi-label {
-  font-size: 0.7rem;
-  color: var(--ink-60);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.3rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-2);
 }
 .kpi-value {
-  font-family: 'Geist Mono', monospace;
-  font-size: 1.375rem;
-  font-weight: 500;
+  font-family: var(--font-rounded);
+  font-size: 28px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+  letter-spacing: -0.01em;
 }
 .kpi-note {
-  font-size: 0.72rem;
-  color: var(--ink-60);
-  margin-top: 0.25rem;
-  line-height: 1.35;
+  font-size: 12px;
+  color: var(--label-2);
+  margin-top: 2px;
+  line-height: 1.3;
 }
-section {
-  margin-bottom: 2rem;
+
+/* Inset grouped lists */
+.list { list-style: none; }
+.row {
+  position: relative;
+  padding: 11px 16px;
+  min-height: 44px;
 }
-h2 {
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 1.0625rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
+.row + .row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 0.5px;
+  background: var(--sep);
 }
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
+.row-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
 }
-th, td {
-  text-align: left;
-  padding: 0.65rem 0.625rem;
-  border-bottom: 1px solid var(--ink-07);
-  font-size: 0.8125rem;
-  vertical-align: top;
+.row-title {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
 }
-tr:last-child td {
-  border-bottom: none;
+.row-sub {
+  font-size: 13px;
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
 }
-th {
-  font-weight: 500;
-  color: var(--ink-60);
-  background: rgba(255,255,255,0.5);
-  font-size: 0.75rem;
+.row-note {
+  font-size: 15px;
+  color: var(--label-2);
+  margin-top: 4px;
+  text-wrap: pretty;
 }
-.mono {
-  font-family: 'Geist Mono', monospace;
+.row-trail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 2px;
+  text-align: right;
+}
+.row-value {
+  font-size: 17px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.pct-cell {
-  min-width: 72px;
-}
 .bar-track {
-  width: 100%;
-  height: 6px;
-  background: var(--ink-07);
-  border-radius: 4px;
-  margin-top: 0.35rem;
+  height: 4px;
+  background: var(--fill-strong);
+  border-radius: 999px;
+  margin-top: 10px;
   overflow: hidden;
 }
 .bar {
   height: 100%;
-  background: var(--ink);
-  border-radius: 4px;
-  transition: width 0.2s ease;
+  background: var(--tint);
+  border-radius: 999px;
+  transition: width 0.25s ease;
 }
+.bar.muted { background: var(--label-3); }
+
 .caveats {
-  font-size: 0.8125rem;
-  color: var(--ink-60);
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.125rem 1.25rem 1.125rem 2rem;
+  padding: 12px 16px 12px 34px;
+  font-size: 15px;
+  color: var(--label-2);
 }
-.caveats li { margin-bottom: 0.5rem; }
+.caveats li { margin-bottom: 8px; text-wrap: pretty; }
 .caveats li:last-child { margin-bottom: 0; }
-.tag { font-size: 0.7rem; color: var(--ink-60); }
+
 footer {
-  margin-top: 2.5rem;
-  font-size: 0.75rem;
-  color: var(--ink-60);
-  border-top: 1px solid var(--border);
-  padding-top: 1rem;
+  padding: 4px 20px 0;
+  font-size: 13px;
+  color: var(--label-2);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Action sheet */
+.sheet-dialog {
+  position: fixed;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 480px;
+  max-height: 100dvh;
+  padding: 0 calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left));
+  border: none;
+  background: transparent;
+  color: var(--label);
+  overflow: visible;
+}
+.sheet-dialog[open] { animation: sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.sheet-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  animation: fade-in 0.25s ease;
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sheet-group {
+  background: var(--sheet);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  backdrop-filter: saturate(180%) blur(30px);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.sheet-group + .sheet-group { margin-top: 8px; }
+.sheet-head {
+  padding: 14px 16px 12px;
+  text-align: center;
+}
+.sheet-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-2);
+}
+.sheet-msg {
+  font-size: 13px;
+  color: var(--label-2);
+  margin-top: 2px;
+}
+.sheet-tip {
+  font-size: 12px;
+  color: var(--label-2);
+  margin-top: 8px;
+}
+.sheet-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 57px;
+  padding: 0 16px;
+  font-size: 20px;
+  color: var(--tint);
+  border-top: 0.5px solid var(--sheet-sep);
+  transition: background-color 0.1s ease;
+}
+.sheet-btn:active { background: var(--fill); }
+.sheet-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.sheet-cancel {
+  font-weight: 600;
+  border-top: none;
+  background: var(--card);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + var(--safe-bottom));
+  z-index: 50;
+  transform: translate(-50%, 16px);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--toast);
+  color: var(--toast-fg);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 @media (min-width: 700px) {
-  body {
-    padding: 2.5rem 1.5rem;
+  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .large-title { padding-top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+@media print {
+  :root {
+    --bg: #ffffff; --card: #ffffff; --label: #000000; --label-2: #555555;
+    --sep: #dddddd; --fill-strong: #e5e5e5; --tint: #000000;
   }
-  header {
-    margin-bottom: 2rem;
-  }
-  h1 {
-    font-size: 1.75rem;
-  }
-  .price-card {
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
-    margin-bottom: 2.5rem;
-  }
-  .kpi {
-    padding: 1.25rem 1.5rem;
-  }
-  .kpi-label {
-    font-size: 0.75rem;
-  }
-  .kpi-value {
-    font-size: 1.5rem;
-  }
-  .kpi-note {
-    font-size: 0.75rem;
-  }
-  section {
-    margin-bottom: 2.5rem;
-  }
-  h2 {
-    font-size: 1.125rem;
-    margin-bottom: 1rem;
-  }
-  th, td {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-  }
-  .caveats {
-    padding: 1.25rem 1.5rem 1.25rem 2.25rem;
-  }
+  body { background: #ffffff; font-size: 12pt; }
+  .navbar, .no-print, .toast, .sheet-dialog { display: none !important; }
+  .content { max-width: none; padding: 0; }
+  .card, .kpi { border: 1px solid #dddddd; break-inside: avoid; }
+  .group { break-inside: avoid; }
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
 }
 </style>
 </head>
 <body>
-<header>
-  <h1>Anthropic employee wealth</h1>
-  <p class="sub" id="header-sub">Paper valuations at $83 IPO price · 19 November 2026 · JS Labs</p>
-</header>
+<nav class="navbar" id="navbar" aria-label="App">
+  <div class="navbar-inner">
+    <a class="nav-brand" href="https://jslabs.xyz" target="_blank" rel="noopener" aria-label="JS Labs website">
+      <svg class="brand-mark" viewBox="16 51 148 78" fill="currentColor" aria-hidden="true"><g id="jsl-mark-rects"><rect x="46" y="51" width="8" height="8"/><rect x="56" y="51" width="8" height="8"/><rect x="66" y="51" width="8" height="8"/><rect x="76" y="51" width="8" height="8"/><rect x="76" y="61" width="8" height="8"/><rect x="76" y="71" width="8" height="8"/><rect x="76" y="81" width="8" height="8"/><rect x="76" y="91" width="8" height="8"/><rect x="76" y="101" width="8" height="8"/><rect x="16" y="111" width="8" height="8"/><rect x="76" y="111" width="8" height="8"/><rect x="26" y="121" width="8" height="8"/><rect x="36" y="121" width="8" height="8"/><rect x="46" y="121" width="8" height="8"/><rect x="56" y="121" width="8" height="8"/><rect x="66" y="121" width="8" height="8"/><rect x="106" y="51" width="8" height="8"/><rect x="116" y="51" width="8" height="8"/><rect x="126" y="51" width="8" height="8"/><rect x="136" y="51" width="8" height="8"/><rect x="146" y="51" width="8" height="8"/><rect x="96" y="61" width="8" height="8"/><rect x="156" y="61" width="8" height="8"/><rect x="96" y="71" width="8" height="8"/><rect x="106" y="81" width="8" height="8"/><rect x="116" y="81" width="8" height="8"/><rect x="126" y="81" width="8" height="8"/><rect x="136" y="81" width="8" height="8"/><rect x="146" y="81" width="8" height="8"/><rect x="156" y="91" width="8" height="8"/><rect x="156" y="101" width="8" height="8"/><rect x="96" y="111" width="8" height="8"/><rect x="156" y="111" width="8" height="8"/><rect x="106" y="121" width="8" height="8"/><rect x="116" y="121" width="8" height="8"/><rect x="126" y="121" width="8" height="8"/><rect x="136" y="121" width="8" height="8"/><rect x="146" y="121" width="8" height="8"/></g></svg>
+    </a>
+    <span class="nav-title" aria-hidden="true">Employee Wealth</span>
+    <button type="button" class="nav-btn" id="share-btn" aria-haspopup="dialog" aria-controls="share-sheet">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M7 11H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1"/>
+      </svg>
+      <span>Export</span>
+    </button>
+  </div>
+</nav>
 
-<section class="price-card" aria-label="Share price controls">
-  <div class="price-card-top">
-    <label class="price-label" for="share-price-input">Latest share price</label>
-    <span class="delta-pill" id="price-delta" aria-live="polite">IPO baseline ($83)</span>
-  </div>
-  <div class="price-input-row">
-    <div class="price-field">
-      <span class="currency-prefix" aria-hidden="true">$</span>
-      <input
-        id="share-price-input"
-        class="price-input"
-        type="text"
-        inputmode="decimal"
-        value="83.00"
-        autocomplete="off"
-        spellcheck="false"
-        aria-label="Latest share price in USD"
-      >
-    </div>
-    <button type="button" class="step-btn" id="step-down" aria-label="Decrease share price by 1 dollar">−</button>
-    <button type="button" class="step-btn" id="step-up" aria-label="Increase share price by 1 dollar">+</button>
-    <button type="button" class="reset-btn" id="reset-price" disabled>Reset</button>
-  </div>
-  <div class="slider-wrap">
-    <input
-      id="share-price-slider"
-      class="price-slider"
-      type="range"
-      min="10"
-      max="250"
-      step="0.5"
-      value="83"
-      aria-label="Slide to adjust share price"
-    >
-    <div class="slider-scale" aria-hidden="true">
-      <span>$10</span>
-      <span>$83 IPO</span>
-      <span>$150</span>
-      <span>$250</span>
-    </div>
-  </div>
-  <div class="presets" role="group" aria-label="Share price presets">
-    <button type="button" class="preset-btn active" data-price="83">$83<span>IPO</span></button>
-    <button type="button" class="preset-btn" data-price="97.17">$97.17<span>Day-1</span></button>
-    <button type="button" class="preset-btn" data-price="120">$120</button>
-    <button type="button" class="preset-btn" data-price="150">$150</button>
-    <button type="button" class="preset-btn" data-price="200">$200</button>
-  </div>
-</section>
+<div class="content">
+  <header class="large-title">
+    <p class="eyebrow">JS Labs · Anthropic IPO</p>
+    <h1 id="large-title">Employee Wealth</h1>
+    <p class="sub" id="header-sub">Paper valuations at $83 IPO price · 19 November 2026</p>
+  </header>
 
-<main>
-  <div class="kpi-grid">
-    <div class="kpi">
-      <div class="kpi-label">Employees</div>
-      <div class="kpi-value">5,300</div>
-      <div class="kpi-note">LIVE · S-1 30 Sep 2026</div>
+  <section class="group" aria-labelledby="price-label">
+    <div class="group-header">
+      <label id="price-label" for="share-price-input">Latest share price</label>
+      <button type="button" class="text-btn no-print" id="reset-price" disabled>Reset</button>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">Millionaires</div>
-      <div class="kpi-value" id="kpi-millionaires">5,100</div>
-      <div class="kpi-note" id="kpi-millionaires-note">96% · ESTIMATED Hill</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Average paper</div>
-      <div class="kpi-value" id="kpi-avg">$44M</div>
-      <div class="kpi-note" id="kpi-avg-note">ESTIMATED · highly skewed</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Centi-millionaires</div>
-      <div class="kpi-value" id="kpi-centi">~600</div>
-      <div class="kpi-note" id="kpi-centi-note">ESTIMATED Hill · non-founders</div>
-    </div>
-  </div>
+    <div class="card price-card">
+      <div class="price-row">
+        <div class="price-field">
+          <span class="currency" aria-hidden="true">$</span>
+          <input
+            id="share-price-input"
+            class="price-input"
+            type="text"
+            inputmode="decimal"
+            enterkeyhint="done"
+            value="83.00"
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="price-delta"
+          >
+        </div>
+        <div class="stepper no-print" role="group" aria-label="Adjust share price by $1">
+          <button type="button" id="step-down" aria-label="Decrease share price by $1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+          </button>
+          <span class="stepper-sep" aria-hidden="true"></span>
+          <button type="button" id="step-up" aria-label="Increase share price by $1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="delta" id="price-delta" aria-live="polite">IPO baseline</p>
 
-  <section>
-    <h2>Wealth tiers</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Tier</th><th>Employees</th><th>%</th><th>Source</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="mono">&gt; $100M</td>
-            <td class="mono" id="tier-100m-count">~600</td>
-            <td class="pct-cell">
-              <span class="mono" id="tier-100m-pct">11%</span>
-              <div class="bar-track"><div class="bar" id="tier-100m-bar" style="width: 11%"></div></div>
-            </td>
-            <td id="tier-100m-src">ESTIMATED Hill</td>
-          </tr>
-          <tr>
-            <td class="mono">&gt; $10M</td>
-            <td class="mono" id="tier-10m-count">~2,800</td>
-            <td class="pct-cell">
-              <span class="mono" id="tier-10m-pct">53%</span>
-              <div class="bar-track"><div class="bar" id="tier-10m-bar" style="width: 53%"></div></div>
-            </td>
-            <td id="tier-10m-src">ESTIMATED Hill</td>
-          </tr>
-          <tr>
-            <td class="mono">&gt; $1M</td>
-            <td class="mono" id="tier-1m-count">~5,100</td>
-            <td class="pct-cell">
-              <span class="mono" id="tier-1m-pct">96%</span>
-              <div class="bar-track"><div class="bar" id="tier-1m-bar" style="width: 96%"></div></div>
-            </td>
-            <td id="tier-1m-src">ESTIMATED Hill</td>
-          </tr>
-          <tr>
-            <td>Total</td>
-            <td class="mono">5,300</td>
-            <td class="pct-cell">
-              <span class="mono">100%</span>
-              <div class="bar-track"><div class="bar" style="width: 100%"></div></div>
-            </td>
-            <td>LIVE S-1</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="slider-wrap no-print">
+        <input
+          id="share-price-slider"
+          class="price-slider"
+          type="range"
+          min="10"
+          max="250"
+          step="0.5"
+          value="83"
+          aria-label="Share price slider"
+        >
+        <div class="slider-scale" aria-hidden="true">
+          <span>$10</span>
+          <span>$83 IPO</span>
+          <span>$150</span>
+          <span>$250</span>
+        </div>
+      </div>
+
+      <div class="segmented no-print" role="group" aria-label="Share price presets">
+        <button type="button" class="preset-btn" data-price="83" aria-pressed="true">$83<small>IPO</small></button>
+        <button type="button" class="preset-btn" data-price="97.17" aria-pressed="false">$97<small>Day 1</small></button>
+        <button type="button" class="preset-btn" data-price="120" aria-pressed="false">$120</button>
+        <button type="button" class="preset-btn" data-price="150" aria-pressed="false">$150</button>
+        <button type="button" class="preset-btn" data-price="200" aria-pressed="false">$200</button>
+      </div>
     </div>
   </section>
 
-  <section>
-    <h2>Cohort concentration</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Cohort</th><th>Approx size</th><th>Equity type</th><th>Notes</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="mono">Pre-2025</td>
-            <td class="mono">~1,000</td>
-            <td>Low-strike options</td>
-            <td id="cohort-pre2025-note">Hold bulk of ~$133B net option value. Many nine-figure stakes.</td>
-          </tr>
-          <tr>
-            <td class="mono">2025–2026</td>
-            <td class="mono">~4,300</td>
-            <td>Mostly RSUs</td>
-            <td id="cohort-2025-note">Average ~$20M. Later grants at higher valuations.</td>
-          </tr>
-        </tbody>
-      </table>
+  <main>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Employees</div>
+        <div class="kpi-value">5,300</div>
+        <div class="kpi-note">LIVE · S-1 30 Sep 2026</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Millionaires</div>
+        <div class="kpi-value" id="kpi-millionaires">5,100</div>
+        <div class="kpi-note" id="kpi-millionaires-note">96% · ESTIMATED Hill</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Average paper</div>
+        <div class="kpi-value" id="kpi-avg">$44M</div>
+        <div class="kpi-note" id="kpi-avg-note">ESTIMATED · highly skewed</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Centi-millionaires</div>
+        <div class="kpi-value" id="kpi-centi">~600</div>
+        <div class="kpi-note" id="kpi-centi-note">ESTIMATED Hill · non-founders</div>
+      </div>
     </div>
-  </section>
 
-  <section>
-    <h2 id="pools-heading">Equity pools at $83</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Pool</th><th>Value</th><th>Notes</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Employee equity (options + RSUs)</td>
-            <td class="mono" id="pool-total-val">~$232B</td>
-            <td id="pool-total-note">ESTIMATED from filings + CNBC. Avg $44M.</td>
-          </tr>
-          <tr>
-            <td>Options intrinsic (net of $2.91 strike)</td>
-            <td class="mono" id="pool-options-val">~$133–142B</td>
-            <td>1.77B shares. $119B paper gains as of 30 Sep.</td>
-          </tr>
-          <tr>
-            <td>RSUs</td>
-            <td class="mono" id="pool-rsus-val">~$84–89B</td>
-            <td>~1.1B shares.</td>
-          </tr>
-          <tr>
-            <td>Founders (separate)</td>
-            <td class="mono" id="pool-founders-val">~$140B</td>
-            <td id="pool-founders-note">7 × ~$20B each. Not in employee totals.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section>
-    <h2>Caveats</h2>
-    <div class="caveats">
-      <ul>
-        <li id="caveat-price">All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.</li>
-        <li>Options intrinsic value scales with max(0, share price − $2.91 avg strike); RSUs and founder stakes scale linearly. Wealth tier counts away from $83 are log-normally modeled from the Hill $83 baseline.</li>
-        <li>Vesting, staggered lock-ups (up to 10% sellable day one for non-founders), and taxes will reduce realised cash.</li>
-        <li>Distribution is highly skewed by tenure. Early low-strike options dominate value. Later hires hold smaller RSU grants.</li>
-        <li>Hill and Sacra estimates are model-based on public filings. Not official company figures.</li>
-        <li>Headcount is as of 30 September 2026. Current headcount may differ.</li>
+    <section class="group" aria-labelledby="tiers-heading">
+      <div class="group-header"><h2 id="tiers-heading">Wealth tiers</h2></div>
+      <ul class="card list">
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Over $100M</span>
+              <span class="row-sub" id="tier-100m-src">ESTIMATED Hill</span>
+            </div>
+            <div class="row-trail">
+              <span class="row-value" id="tier-100m-count">~600</span>
+              <span class="row-sub" id="tier-100m-pct">11%</span>
+            </div>
+          </div>
+          <div class="bar-track" aria-hidden="true"><div class="bar" id="tier-100m-bar" style="width: 11%"></div></div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Over $10M</span>
+              <span class="row-sub" id="tier-10m-src">ESTIMATED Hill</span>
+            </div>
+            <div class="row-trail">
+              <span class="row-value" id="tier-10m-count">~2,800</span>
+              <span class="row-sub" id="tier-10m-pct">53%</span>
+            </div>
+          </div>
+          <div class="bar-track" aria-hidden="true"><div class="bar" id="tier-10m-bar" style="width: 53%"></div></div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Over $1M</span>
+              <span class="row-sub" id="tier-1m-src">ESTIMATED Hill</span>
+            </div>
+            <div class="row-trail">
+              <span class="row-value" id="tier-1m-count">~5,100</span>
+              <span class="row-sub" id="tier-1m-pct">96%</span>
+            </div>
+          </div>
+          <div class="bar-track" aria-hidden="true"><div class="bar" id="tier-1m-bar" style="width: 96%"></div></div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Total</span>
+              <span class="row-sub">LIVE S-1</span>
+            </div>
+            <div class="row-trail">
+              <span class="row-value">5,300</span>
+              <span class="row-sub">100%</span>
+            </div>
+          </div>
+          <div class="bar-track" aria-hidden="true"><div class="bar muted" style="width: 100%"></div></div>
+        </li>
       </ul>
-    </div>
-  </section>
-</main>
+    </section>
 
-<footer>
-  Sources: Anthropic S-1 (LIVE headcount, option counts), Hill.com (ESTIMATED tiers), CNBC / Reuters (totals). Built by JS Labs.
-</footer>
+    <section class="group" aria-labelledby="cohort-heading">
+      <div class="group-header"><h2 id="cohort-heading">Cohort concentration</h2></div>
+      <ul class="card list">
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Pre-2025</span>
+              <span class="row-sub">Low-strike options</span>
+            </div>
+            <div class="row-trail"><span class="row-value">~1,000</span><span class="row-sub">people</span></div>
+          </div>
+          <p class="row-note" id="cohort-pre2025-note">Hold bulk of ~$133B net option value. Many nine-figure stakes.</p>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">2025–2026</span>
+              <span class="row-sub">Mostly RSUs</span>
+            </div>
+            <div class="row-trail"><span class="row-value">~4,300</span><span class="row-sub">people</span></div>
+          </div>
+          <p class="row-note" id="cohort-2025-note">Average ~$20M. Later grants at higher valuations.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="group" aria-labelledby="pools-heading">
+      <div class="group-header"><h2 id="pools-heading">Equity pools at $83</h2></div>
+      <ul class="card list">
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Employee equity</span>
+              <span class="row-sub" id="pool-total-note">Options + RSUs · ESTIMATED · Avg $44M</span>
+            </div>
+            <div class="row-trail"><span class="row-value" id="pool-total-val">~$232B</span></div>
+          </div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Options intrinsic</span>
+              <span class="row-sub">1.77B shares · net of $2.91 strike</span>
+            </div>
+            <div class="row-trail"><span class="row-value" id="pool-options-val">~$133–142B</span></div>
+          </div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">RSUs</span>
+              <span class="row-sub">~1.1B shares</span>
+            </div>
+            <div class="row-trail"><span class="row-value" id="pool-rsus-val">~$84–89B</span></div>
+          </div>
+        </li>
+        <li class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">Founders</span>
+              <span class="row-sub" id="pool-founders-note">7 × ~$20B · not in employee totals</span>
+            </div>
+            <div class="row-trail"><span class="row-value" id="pool-founders-val">~$140B</span></div>
+          </div>
+        </li>
+      </ul>
+      <p class="group-footer">$119B options paper gains as of 30 Sep 2026.</p>
+    </section>
+
+    <section class="group" aria-labelledby="caveats-heading">
+      <div class="group-header"><h2 id="caveats-heading">Caveats</h2></div>
+      <div class="card">
+        <ul class="caveats">
+          <li id="caveat-price">All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.</li>
+          <li>Options intrinsic value scales with max(0, share price − $2.91 avg strike); RSUs and founder stakes scale linearly. Wealth tier counts away from $83 are log-normally modeled from the Hill $83 baseline.</li>
+          <li>Vesting, staggered lock-ups (up to 10% sellable day one for non-founders), and taxes will reduce realised cash.</li>
+          <li>Distribution is highly skewed by tenure. Early low-strike options dominate value. Later hires hold smaller RSU grants.</li>
+          <li>Hill and Sacra estimates are model-based on public filings. Not official company figures.</li>
+          <li>Headcount is as of 30 September 2026. Current headcount may differ.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Sources: Anthropic S-1 (LIVE headcount, option counts), Hill.com (ESTIMATED tiers), CNBC / Reuters (totals).
+    <br>
+    <a class="footer-brand" href="https://jslabs.xyz" target="_blank" rel="noopener">
+      <svg class="brand-mark" viewBox="16 51 148 78" fill="currentColor" aria-hidden="true"><use href="#jsl-mark-rects"/></svg>
+      Built by JS Labs
+    </a>
+  </footer>
+</div>
+
+<dialog class="sheet-dialog" id="share-sheet" aria-labelledby="sheet-title">
+  <div class="sheet-group">
+    <div class="sheet-head">
+      <p class="sheet-title" id="sheet-title">Export at $83</p>
+      <p class="sheet-msg">Share or save the current scenario</p>
+      <p class="sheet-tip" id="install-tip" hidden>Install: tap Safari&apos;s Share button, then Add to Home Screen.</p>
+    </div>
+    <button type="button" class="sheet-btn" data-action="link">Share Link</button>
+    <button type="button" class="sheet-btn" data-action="image">Share Summary Image</button>
+    <button type="button" class="sheet-btn" data-action="csv">Export CSV</button>
+    <button type="button" class="sheet-btn" data-action="json">Export JSON</button>
+    <button type="button" class="sheet-btn" data-action="pdf">Print or Save PDF</button>
+  </div>
+  <div class="sheet-group">
+    <button type="button" class="sheet-btn sheet-cancel" data-action="cancel">Cancel</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -620,9 +994,10 @@ footer {
   const DAY_ONE_CLOSE = 97.17;
   const AVG_STRIKE = 2.91;
   const HEADCOUNT = 5300;
-  const IPO_OPTION_INTRINSIC = IPO_PRICE - AVG_STRIKE; // 80.09
+  const IPO_OPTION_INTRINSIC = IPO_PRICE - AVG_STRIKE;
+  const AS_OF = '19 November 2026';
 
-  // Baseline values at $83 IPO
+  // Baseline values at $83 IPO (USD billions unless noted)
   const BASE_OPT_LOW = 133;
   const BASE_OPT_HIGH = 142;
   const BASE_RSU_LOW = 84;
@@ -634,64 +1009,65 @@ footer {
   const BASE_COHORT_PRE2025 = 133;
   const BASE_COHORT_2025_AVG = 20;
 
-  // Log-normal anchors matched to exact Hill estimates at $83:
+  // Log-normal anchors matched to Hill estimates at $83:
   // 600 / 5300 (11.32%), 2800 / 5300 (52.83%), 5100 / 5300 (96.23%)
   const Z_100M = 1.20969;
   const Z_10M = -0.07100;
   const Z_1M = -1.77758;
-  const LN_10 = Math.LN10;
-  const SLOPE_HIGH = (Z_100M - Z_10M) / LN_10;
-  const SLOPE_LOW = (Z_10M - Z_1M) / LN_10;
+  const SLOPE_HIGH = (Z_100M - Z_10M) / Math.LN10;
+  const SLOPE_LOW = (Z_10M - Z_1M) / Math.LN10;
 
+  const $ = function (id) { return document.getElementById(id); };
   const els = {
-    headerSub: document.getElementById('header-sub'),
-    priceDelta: document.getElementById('price-delta'),
-    input: document.getElementById('share-price-input'),
-    slider: document.getElementById('share-price-slider'),
-    stepDown: document.getElementById('step-down'),
-    stepUp: document.getElementById('step-up'),
-    resetBtn: document.getElementById('reset-price'),
+    navbar: $('navbar'),
+    largeTitle: $('large-title'),
+    headerSub: $('header-sub'),
+    priceDelta: $('price-delta'),
+    input: $('share-price-input'),
+    slider: $('share-price-slider'),
+    stepDown: $('step-down'),
+    stepUp: $('step-up'),
+    resetBtn: $('reset-price'),
     presets: Array.from(document.querySelectorAll('.preset-btn')),
-    kpiMillionaires: document.getElementById('kpi-millionaires'),
-    kpiMillionairesNote: document.getElementById('kpi-millionaires-note'),
-    kpiAvg: document.getElementById('kpi-avg'),
-    kpiAvgNote: document.getElementById('kpi-avg-note'),
-    kpiCenti: document.getElementById('kpi-centi'),
-    kpiCentiNote: document.getElementById('kpi-centi-note'),
-    tier100mCount: document.getElementById('tier-100m-count'),
-    tier100mPct: document.getElementById('tier-100m-pct'),
-    tier100mBar: document.getElementById('tier-100m-bar'),
-    tier100mSrc: document.getElementById('tier-100m-src'),
-    tier10mCount: document.getElementById('tier-10m-count'),
-    tier10mPct: document.getElementById('tier-10m-pct'),
-    tier10mBar: document.getElementById('tier-10m-bar'),
-    tier10mSrc: document.getElementById('tier-10m-src'),
-    tier1mCount: document.getElementById('tier-1m-count'),
-    tier1mPct: document.getElementById('tier-1m-pct'),
-    tier1mBar: document.getElementById('tier-1m-bar'),
-    tier1mSrc: document.getElementById('tier-1m-src'),
-    cohortPre2025Note: document.getElementById('cohort-pre2025-note'),
-    cohort2025Note: document.getElementById('cohort-2025-note'),
-    poolsHeading: document.getElementById('pools-heading'),
-    poolTotalVal: document.getElementById('pool-total-val'),
-    poolTotalNote: document.getElementById('pool-total-note'),
-    poolOptionsVal: document.getElementById('pool-options-val'),
-    poolRsusVal: document.getElementById('pool-rsus-val'),
-    poolFoundersVal: document.getElementById('pool-founders-val'),
-    poolFoundersNote: document.getElementById('pool-founders-note'),
-    caveatPrice: document.getElementById('caveat-price')
+    kpiMillionaires: $('kpi-millionaires'),
+    kpiMillionairesNote: $('kpi-millionaires-note'),
+    kpiAvg: $('kpi-avg'),
+    kpiAvgNote: $('kpi-avg-note'),
+    kpiCenti: $('kpi-centi'),
+    kpiCentiNote: $('kpi-centi-note'),
+    tier100mCount: $('tier-100m-count'),
+    tier100mPct: $('tier-100m-pct'),
+    tier100mBar: $('tier-100m-bar'),
+    tier100mSrc: $('tier-100m-src'),
+    tier10mCount: $('tier-10m-count'),
+    tier10mPct: $('tier-10m-pct'),
+    tier10mBar: $('tier-10m-bar'),
+    tier10mSrc: $('tier-10m-src'),
+    tier1mCount: $('tier-1m-count'),
+    tier1mPct: $('tier-1m-pct'),
+    tier1mBar: $('tier-1m-bar'),
+    tier1mSrc: $('tier-1m-src'),
+    cohortPre2025Note: $('cohort-pre2025-note'),
+    cohort2025Note: $('cohort-2025-note'),
+    poolsHeading: $('pools-heading'),
+    poolTotalVal: $('pool-total-val'),
+    poolTotalNote: $('pool-total-note'),
+    poolOptionsVal: $('pool-options-val'),
+    poolRsusVal: $('pool-rsus-val'),
+    poolFoundersVal: $('pool-founders-val'),
+    poolFoundersNote: $('pool-founders-note'),
+    caveatPrice: $('caveat-price'),
+    shareBtn: $('share-btn'),
+    sheet: $('share-sheet'),
+    sheetTitle: $('sheet-title'),
+    installTip: $('install-tip'),
+    toast: $('toast')
   };
 
   function normCdf(z) {
     const t = 1 / (1 + 0.2316419 * Math.abs(z));
     const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
-    const p =
-      d *
-      t *
-      (0.31938153 +
-        t *
-          (-0.356563782 +
-            t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+    const p = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
     return z > 0 ? 1 - p : p;
   }
 
@@ -699,24 +1075,26 @@ footer {
     const rounded = Math.round(price * 100) / 100;
     return Number.isInteger(rounded) ? '$' + rounded.toLocaleString('en-US') : '$' + rounded.toFixed(2);
   }
-
   function formatBillions(val) {
     if (val <= 0) return '$0B';
     if (val < 10) return '$' + val.toFixed(1) + 'B';
     return '$' + Math.round(val).toLocaleString('en-US') + 'B';
   }
-
   function formatBillionsRange(low, high) {
     if (high <= 0) return '$0B';
     if (high < 10) return '~$' + low.toFixed(1) + '–' + high.toFixed(1) + 'B';
     return '~$' + Math.round(low).toLocaleString('en-US') + '–' + Math.round(high).toLocaleString('en-US') + 'B';
   }
-
   function formatMillions(val) {
     if (val <= 0) return '$0M';
     if (val < 1) return '$' + Math.round(val * 1000) + 'K';
     if (val < 10) return '$' + val.toFixed(1) + 'M';
     return '$' + Math.round(val).toLocaleString('en-US') + 'M';
+  }
+  function formatDelta(m) {
+    if (m.isBaseline) return 'IPO baseline';
+    const sign = m.diff > 0 ? '+' : '';
+    return (m.diff > 0 ? '+$' : '−$') + Math.abs(m.diff).toFixed(2) + ' (' + sign + m.diffPct.toFixed(1) + '%) vs IPO';
   }
 
   function roundHeadcount(raw) {
@@ -726,174 +1104,129 @@ footer {
     if (clamped >= 10) return Math.round(clamped / 5) * 5;
     return Math.round(clamped);
   }
-
   function estimateTierCount(thresholdMillions, equityMultiplier) {
     if (equityMultiplier <= 0) return 0;
     const equivThreshold = thresholdMillions / equityMultiplier;
     const logRatio = Math.log(equivThreshold / 10);
     const z = equivThreshold >= 10 ? Z_10M + logRatio * SLOPE_HIGH : Z_10M + logRatio * SLOPE_LOW;
-    const prob = 1 - normCdf(z);
-    return roundHeadcount(prob * HEADCOUNT);
+    return roundHeadcount((1 - normCdf(z)) * HEADCOUNT);
   }
 
-  let currentPrice = IPO_PRICE;
-
-  function render(price, options) {
-    const syncInput = !options || options.syncInput !== false;
-    const syncUrl = !options || options.syncUrl !== false;
-
-    const clamped = Math.max(0, Math.min(10000, Number.isFinite(price) ? price : IPO_PRICE));
-    currentPrice = Math.round(clamped * 100) / 100;
-
-    const isBaseline = Math.abs(currentPrice - IPO_PRICE) < 0.005;
-    const isDayOne = Math.abs(currentPrice - DAY_ONE_CLOSE) < 0.005;
-
-    const optFactor = Math.max(0, currentPrice - AVG_STRIKE) / IPO_OPTION_INTRINSIC;
-    const rsuFactor = currentPrice / IPO_PRICE;
-
+  function compute(rawPrice) {
+    const clamped = Math.max(0, Math.min(10000, Number.isFinite(rawPrice) ? rawPrice : IPO_PRICE));
+    const price = Math.round(clamped * 100) / 100;
+    const isBaseline = Math.abs(price - IPO_PRICE) < 0.005;
+    const isDayOne = Math.abs(price - DAY_ONE_CLOSE) < 0.005;
+    const optFactor = Math.max(0, price - AVG_STRIKE) / IPO_OPTION_INTRINSIC;
+    const rsuFactor = price / IPO_PRICE;
     const totalEquityB = BASE_TOTAL_OPT * optFactor + BASE_TOTAL_RSU * rsuFactor;
     const equityMultiplier = totalEquityB / BASE_TOTAL_EQUITY;
-    const avgPaperM = (totalEquityB * 1000) / HEADCOUNT;
-    const baseAvgM = (BASE_TOTAL_EQUITY * 1000) / HEADCOUNT;
-
-    const optLowB = BASE_OPT_LOW * optFactor;
-    const optHighB = BASE_OPT_HIGH * optFactor;
-    const rsuLowB = BASE_RSU_LOW * rsuFactor;
-    const rsuHighB = BASE_RSU_HIGH * rsuFactor;
-    const foundersB = BASE_FOUNDERS * rsuFactor;
-    const perFounderB = foundersB / 7;
-    const cohortPre2025B = BASE_COHORT_PRE2025 * optFactor;
-    const cohort2025AvgM = BASE_COHORT_2025_AVG * rsuFactor;
 
     let count100m, count10m, count1m;
     if (isBaseline) {
-      count100m = 600;
-      count10m = 2800;
-      count1m = 5100;
+      count100m = 600; count10m = 2800; count1m = 5100;
     } else {
       count100m = estimateTierCount(100, equityMultiplier);
       count10m = Math.max(count100m, estimateTierCount(10, equityMultiplier));
       count1m = Math.max(count10m, estimateTierCount(1, equityMultiplier));
     }
+    const foundersB = BASE_FOUNDERS * rsuFactor;
+    const diff = price - IPO_PRICE;
 
-    const pct100m = Math.round((count100m / HEADCOUNT) * 100);
-    const pct10m = Math.round((count10m / HEADCOUNT) * 100);
-    const pct1m = Math.round((count1m / HEADCOUNT) * 100);
+    return {
+      price: price,
+      isBaseline: isBaseline,
+      isDayOne: isDayOne,
+      diff: diff,
+      diffPct: (diff / IPO_PRICE) * 100,
+      totalEquityB: totalEquityB,
+      avgPaperM: (totalEquityB * 1000) / HEADCOUNT,
+      baseAvgM: (BASE_TOTAL_EQUITY * 1000) / HEADCOUNT,
+      optLowB: BASE_OPT_LOW * optFactor,
+      optHighB: BASE_OPT_HIGH * optFactor,
+      rsuLowB: BASE_RSU_LOW * rsuFactor,
+      rsuHighB: BASE_RSU_HIGH * rsuFactor,
+      foundersB: foundersB,
+      perFounderB: foundersB / 7,
+      cohortPre2025B: BASE_COHORT_PRE2025 * optFactor,
+      cohort2025AvgM: BASE_COHORT_2025_AVG * rsuFactor,
+      count100m: count100m,
+      count10m: count10m,
+      count1m: count1m,
+      pct100m: Math.round((count100m / HEADCOUNT) * 100),
+      pct10m: Math.round((count10m / HEADCOUNT) * 100),
+      pct1m: Math.round((count1m / HEADCOUNT) * 100),
+      tierSource: isBaseline ? 'ESTIMATED Hill' : 'MODELED from Hill $83'
+    };
+  }
 
-    const priceStr = formatPrice(currentPrice);
-    const diff = currentPrice - IPO_PRICE;
-    const diffPct = (diff / IPO_PRICE) * 100;
-    const sign = diff > 0 ? '+' : '';
+  let model = compute(IPO_PRICE);
 
-    // Sync controls
-    if (syncInput) {
-      els.input.value = currentPrice.toFixed(2);
-    }
-    els.slider.value = String(Math.max(10, Math.min(250, currentPrice)));
-    els.resetBtn.disabled = isBaseline;
+  function render(price, options) {
+    const syncInput = !options || options.syncInput !== false;
+    const syncUrl = !options || options.syncUrl !== false;
+    const m = compute(price);
+    model = m;
+    const priceStr = formatPrice(m.price);
 
+    if (syncInput) els.input.value = m.price.toFixed(2);
+    const sliderVal = Math.max(10, Math.min(250, m.price));
+    els.slider.value = String(sliderVal);
+    els.slider.style.setProperty('--pct', ((sliderVal - 10) / 240) * 100 + '%');
+    els.resetBtn.disabled = m.isBaseline;
     els.presets.forEach(function (btn) {
       const p = parseFloat(btn.getAttribute('data-price'));
-      btn.classList.toggle('active', Math.abs(p - currentPrice) < 0.005);
+      btn.setAttribute('aria-pressed', String(Math.abs(p - m.price) < 0.005));
     });
 
-    // Delta pill & header subtitle
-    if (isBaseline) {
-      els.priceDelta.textContent = 'IPO baseline';
-      els.priceDelta.className = 'delta-pill';
-      els.headerSub.textContent = 'Paper valuations at $83 IPO price · 19 November 2026 · JS Labs';
+    els.priceDelta.textContent = formatDelta(m);
+    els.priceDelta.className = 'delta' + (m.isBaseline ? '' : m.diff > 0 ? ' positive' : ' negative');
+    if (m.isBaseline) {
+      els.headerSub.textContent = 'Paper valuations at $83 IPO price · ' + AS_OF;
     } else {
-      els.priceDelta.textContent =
-        (diff > 0 ? '+$' : '-$') +
-        Math.abs(diff).toFixed(2) +
-        ' (' +
-        sign +
-        diffPct.toFixed(1) +
-        '%)';
-      els.priceDelta.className = 'delta-pill ' + (diff > 0 ? 'positive' : 'negative');
-      const context = isDayOne
-        ? 'day-one close'
-        : sign + diffPct.toFixed(1) + '% vs $83 IPO';
-      els.headerSub.textContent =
-        'Paper valuations at ' + priceStr + ' (' + context + ') · 19 November 2026 · JS Labs';
+      const context = m.isDayOne ? 'day-one close' : (m.diff > 0 ? '+' : '') + m.diffPct.toFixed(1) + '% vs IPO';
+      els.headerSub.textContent = 'Paper valuations at ' + priceStr + ' (' + context + ') · ' + AS_OF;
     }
+    els.sheetTitle.textContent = 'Export at ' + priceStr;
 
-    // KPIs
-    els.kpiMillionaires.textContent = (isBaseline ? '' : '~') + count1m.toLocaleString('en-US');
-    els.kpiMillionairesNote.textContent =
-      pct1m + '% · ' + (isBaseline ? 'ESTIMATED Hill' : 'MODELED from Hill');
-
-    els.kpiAvg.textContent = formatMillions(avgPaperM);
-    if (isBaseline) {
+    els.kpiMillionaires.textContent = (m.isBaseline ? '' : '~') + m.count1m.toLocaleString('en-US');
+    els.kpiMillionairesNote.textContent = m.pct1m + '% · ' + (m.isBaseline ? 'ESTIMATED Hill' : 'MODELED');
+    els.kpiAvg.textContent = formatMillions(m.avgPaperM);
+    if (m.isBaseline) {
       els.kpiAvgNote.textContent = 'ESTIMATED · highly skewed';
     } else {
-      const avgDiff = avgPaperM - baseAvgM;
-      const avgSign = avgDiff >= 0 ? '+' : '-';
-      els.kpiAvgNote.textContent =
-        avgSign + formatMillions(Math.abs(avgDiff)) + ' vs IPO · highly skewed';
+      const avgDiff = m.avgPaperM - m.baseAvgM;
+      els.kpiAvgNote.textContent = (avgDiff >= 0 ? '+' : '−') + formatMillions(Math.abs(avgDiff)) + ' vs IPO · skewed';
     }
+    els.kpiCenti.textContent = '~' + m.count100m.toLocaleString('en-US');
+    els.kpiCentiNote.textContent = (m.isBaseline ? 'ESTIMATED Hill' : m.pct100m + '% · MODELED') + ' · non-founders';
 
-    els.kpiCenti.textContent = '~' + count100m.toLocaleString('en-US');
-    els.kpiCentiNote.textContent =
-      (isBaseline ? 'ESTIMATED Hill' : pct100m + '% · MODELED') + ' · non-founders';
+    [['100m', m.count100m, m.pct100m], ['10m', m.count10m, m.pct10m], ['1m', m.count1m, m.pct1m]].forEach(function (t) {
+      els['tier' + t[0] + 'Count'].textContent = '~' + t[1].toLocaleString('en-US');
+      els['tier' + t[0] + 'Pct'].textContent = t[2] + '%';
+      els['tier' + t[0] + 'Bar'].style.width = t[2] + '%';
+      els['tier' + t[0] + 'Src'].textContent = m.tierSource;
+    });
 
-    // Wealth tiers table
-    const tierSource = isBaseline ? 'ESTIMATED Hill' : 'MODELED (Hill $83)';
-    els.tier100mCount.textContent = '~' + count100m.toLocaleString('en-US');
-    els.tier100mPct.textContent = pct100m + '%';
-    els.tier100mBar.style.width = pct100m + '%';
-    els.tier100mSrc.textContent = tierSource;
+    els.cohortPre2025Note.textContent = 'Hold bulk of ~' + formatBillions(m.cohortPre2025B) + ' net option value. Many nine-figure stakes.';
+    els.cohort2025Note.textContent = 'Average ~' + formatMillions(m.cohort2025AvgM) + '. Later grants at higher valuations.';
 
-    els.tier10mCount.textContent = '~' + count10m.toLocaleString('en-US');
-    els.tier10mPct.textContent = pct10m + '%';
-    els.tier10mBar.style.width = pct10m + '%';
-    els.tier10mSrc.textContent = tierSource;
-
-    els.tier1mCount.textContent = '~' + count1m.toLocaleString('en-US');
-    els.tier1mPct.textContent = pct1m + '%';
-    els.tier1mBar.style.width = pct1m + '%';
-    els.tier1mSrc.textContent = tierSource;
-
-    // Cohort concentration
-    els.cohortPre2025Note.textContent =
-      'Hold bulk of ~' +
-      formatBillions(cohortPre2025B) +
-      ' net option value. Many nine-figure stakes.';
-    els.cohort2025Note.textContent =
-      'Average ~' +
-      formatMillions(cohort2025AvgM) +
-      '. Later grants at higher valuations.';
-
-    // Equity pools
     els.poolsHeading.textContent = 'Equity pools at ' + priceStr;
-    els.poolTotalVal.textContent = '~' + formatBillions(totalEquityB);
-    els.poolTotalNote.textContent =
-      'ESTIMATED from filings + CNBC. Avg ' + formatMillions(avgPaperM) + '.';
-    els.poolOptionsVal.textContent = formatBillionsRange(optLowB, optHighB);
-    els.poolRsusVal.textContent = formatBillionsRange(rsuLowB, rsuHighB);
-    els.poolFoundersVal.textContent = '~' + formatBillions(foundersB);
-    els.poolFoundersNote.textContent =
-      '7 × ~' + formatBillions(perFounderB) + ' each. Not in employee totals.';
+    els.poolTotalVal.textContent = '~' + formatBillions(m.totalEquityB);
+    els.poolTotalNote.textContent = 'Options + RSUs · ESTIMATED · Avg ' + formatMillions(m.avgPaperM);
+    els.poolOptionsVal.textContent = formatBillionsRange(m.optLowB, m.optHighB);
+    els.poolRsusVal.textContent = formatBillionsRange(m.rsuLowB, m.rsuHighB);
+    els.poolFoundersVal.textContent = '~' + formatBillions(m.foundersB);
+    els.poolFoundersNote.textContent = '7 × ~' + formatBillions(m.perFounderB) + ' · not in employee totals';
 
-    // Caveat
-    if (isBaseline) {
-      els.caveatPrice.textContent =
-        'All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.';
-    } else {
-      els.caveatPrice.textContent =
-        'All employee figures are paper valuations recalculated at ' +
-        priceStr +
-        ' per share (IPO price was $83; day-one close was $97.17).';
-    }
+    els.caveatPrice.textContent = m.isBaseline
+      ? 'All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.'
+      : 'All employee figures are paper valuations recalculated at ' + priceStr + ' per share (IPO price was $83; day-one close was $97.17).';
 
-    // Reflect price in URL query param without polluting browser history
     if (syncUrl && window.history && window.history.replaceState) {
       const url = new URL(window.location.href);
-      if (isBaseline) {
-        url.searchParams.delete('price');
-      } else {
-        url.searchParams.set('price', Number.isInteger(currentPrice) ? String(currentPrice) : currentPrice.toFixed(2));
-      }
+      if (m.isBaseline) url.searchParams.delete('price');
+      else url.searchParams.set('price', Number.isInteger(m.price) ? String(m.price) : m.price.toFixed(2));
       window.history.replaceState(null, '', url.toString());
     }
   }
@@ -907,45 +1240,39 @@ footer {
 
   els.input.addEventListener('input', function () {
     const val = parseInput(els.input.value);
-    if (val !== null) {
-      render(val, { syncInput: false });
-    }
+    if (val !== null) render(val, { syncInput: false });
   });
-
+  els.input.addEventListener('focus', function () {
+    els.input.select();
+  });
   els.input.addEventListener('blur', function () {
     const val = parseInput(els.input.value);
-    render(val !== null ? val : currentPrice, { syncInput: true });
+    render(val !== null ? val : model.price);
   });
-
   els.input.addEventListener('keydown', function (e) {
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter') {
       els.input.blur();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      render(currentPrice + (e.shiftKey ? 5 : 1));
+      render(model.price + (e.shiftKey ? 5 : 1));
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      render(Math.max(0, currentPrice - (e.shiftKey ? 5 : 1)));
+      render(Math.max(0, model.price - (e.shiftKey ? 5 : 1)));
     }
   });
-
   els.slider.addEventListener('input', function () {
     render(parseFloat(els.slider.value));
   });
-
   els.stepDown.addEventListener('click', function () {
-    render(Math.max(0, Math.round((currentPrice - 1) * 100) / 100));
+    render(Math.max(0, Math.round((model.price - 1) * 100) / 100));
   });
-
   els.stepUp.addEventListener('click', function () {
-    render(Math.round((currentPrice + 1) * 100) / 100);
+    render(Math.round((model.price + 1) * 100) / 100);
   });
-
   els.resetBtn.addEventListener('click', function () {
     render(IPO_PRICE);
   });
-
   els.presets.forEach(function (btn) {
     btn.addEventListener('click', function () {
       const p = parseFloat(btn.getAttribute('data-price'));
@@ -953,9 +1280,331 @@ footer {
     });
   });
 
-  // Support deep linking via ?price=97.17
-  const params = new URLSearchParams(window.location.search);
-  const initialParam = params.get('price');
+  // Compact nav title once the large title scrolls under the bar (iOS pattern)
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      els.navbar.classList.toggle('scrolled', !entries[0].isIntersecting);
+    }, { rootMargin: '-44px 0px 0px 0px', threshold: 0 }).observe(els.largeTitle);
+  }
+
+  /* ---------- Export ---------- */
+
+  let toastTimer;
+  function showToast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { els.toast.classList.remove('show'); }, 2200);
+  }
+
+  function fileSlug(m) {
+    return 'anthropic-wealth-' + (Number.isInteger(m.price) ? String(m.price) : m.price.toFixed(2));
+  }
+
+  function shareUrl(m) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    if (!m.isBaseline) url.searchParams.set('price', Number.isInteger(m.price) ? String(m.price) : m.price.toFixed(2));
+    return url.toString();
+  }
+
+  function download(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  // Must be called synchronously from the tap handler so iOS keeps the user gesture.
+  function deliverFile(blob, filename, title) {
+    let file = null;
+    try { file = new File([blob], filename, { type: blob.type }); } catch (err) { file = null; }
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: title }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        download(blob, filename);
+        showToast('Saved ' + filename);
+      });
+      return;
+    }
+    download(blob, filename);
+    showToast('Saved ' + filename);
+  }
+
+  function csvCell(v) {
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function round1(n) { return Math.round(n * 10) / 10; }
+
+  function buildCsv(m) {
+    const rows = [
+      ['Section', 'Metric', 'Value', 'Unit', 'Source / notes'],
+      ['Scenario', 'Share price', m.price.toFixed(2), 'USD', m.isBaseline ? 'IPO price' : m.isDayOne ? 'Day-one close' : 'Custom'],
+      ['Scenario', 'Change vs IPO', m.diffPct.toFixed(2), '%', 'IPO price $83'],
+      ['Scenario', 'Data as of', AS_OF, '', ''],
+      ['Scenario', 'Exported', new Date().toISOString(), '', ''],
+      ['Headline', 'Employees', HEADCOUNT, 'people', 'LIVE S-1 30 Sep 2026'],
+      ['Headline', 'Millionaires', m.count1m, 'people', m.tierSource],
+      ['Headline', 'Average paper wealth', round1(m.avgPaperM), 'USD millions', 'Highly skewed'],
+      ['Headline', 'Centi-millionaires', m.count100m, 'people', m.tierSource + '; non-founders'],
+      ['Wealth tiers', 'Over $100M', m.count100m, 'people', m.pct100m + '% of headcount'],
+      ['Wealth tiers', 'Over $10M', m.count10m, 'people', m.pct10m + '% of headcount'],
+      ['Wealth tiers', 'Over $1M', m.count1m, 'people', m.pct1m + '% of headcount'],
+      ['Cohorts', 'Pre-2025 net option value', round1(m.cohortPre2025B), 'USD billions', '~1,000 employees; low-strike options'],
+      ['Cohorts', '2025–2026 average stake', round1(m.cohort2025AvgM), 'USD millions', '~4,300 employees; mostly RSUs'],
+      ['Equity pools', 'Employee equity total', round1(m.totalEquityB), 'USD billions', 'ESTIMATED from filings + CNBC'],
+      ['Equity pools', 'Options intrinsic (low)', round1(m.optLowB), 'USD billions', '1.77B shares; net of $2.91 strike'],
+      ['Equity pools', 'Options intrinsic (high)', round1(m.optHighB), 'USD billions', ''],
+      ['Equity pools', 'RSUs (low)', round1(m.rsuLowB), 'USD billions', '~1.1B shares'],
+      ['Equity pools', 'RSUs (high)', round1(m.rsuHighB), 'USD billions', ''],
+      ['Equity pools', 'Founders total', round1(m.foundersB), 'USD billions', 'Not in employee totals'],
+      ['Equity pools', 'Per founder', round1(m.perFounderB), 'USD billions', '7 founders']
+    ];
+    return '\ufeff' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+  }
+
+  function buildJson(m) {
+    return JSON.stringify({
+      scenario: {
+        sharePriceUsd: m.price,
+        ipoPriceUsd: IPO_PRICE,
+        dayOneCloseUsd: DAY_ONE_CLOSE,
+        changeVsIpoPct: round1(m.diffPct),
+        dataAsOf: AS_OF,
+        exportedAt: new Date().toISOString(),
+        url: shareUrl(m)
+      },
+      headline: {
+        employees: HEADCOUNT,
+        millionaires: m.count1m,
+        averagePaperWealthUsdM: round1(m.avgPaperM),
+        centiMillionaires: m.count100m
+      },
+      wealthTiers: [
+        { tier: 'over_100m', employees: m.count100m, pct: m.pct100m },
+        { tier: 'over_10m', employees: m.count10m, pct: m.pct10m },
+        { tier: 'over_1m', employees: m.count1m, pct: m.pct1m }
+      ],
+      tierSource: m.tierSource,
+      cohorts: [
+        { cohort: 'pre_2025', approxSize: 1000, equity: 'low_strike_options', netOptionValueUsdB: round1(m.cohortPre2025B) },
+        { cohort: '2025_2026', approxSize: 4300, equity: 'mostly_rsus', averageStakeUsdM: round1(m.cohort2025AvgM) }
+      ],
+      equityPoolsUsdB: {
+        employeeTotal: round1(m.totalEquityB),
+        optionsIntrinsic: [round1(m.optLowB), round1(m.optHighB)],
+        rsus: [round1(m.rsuLowB), round1(m.rsuHighB)],
+        founders: round1(m.foundersB),
+        perFounder: round1(m.perFounderB)
+      },
+      sources: ['Anthropic S-1', 'Hill.com', 'CNBC', 'Reuters'],
+      disclaimer: 'Paper valuations. Tier counts away from $83 are modeled. Not official company figures.'
+    }, null, 2);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  const JSL_MARK = Array.prototype.map.call(
+    document.querySelectorAll('#jsl-mark-rects rect'),
+    function (r) { return [Number(r.getAttribute('x')), Number(r.getAttribute('y'))]; }
+  );
+  // Canvas can't wait for fonts inside the share gesture, so warm them up front.
+  if (document.fonts && document.fonts.load) {
+    ['500 26px "Geist Mono"', '600 66px "Geist Mono"', '400 24px "IBM Plex Sans"', '500 30px "IBM Plex Sans"', '600 28px "IBM Plex Sans"', '700 34px "IBM Plex Sans"']
+      .forEach(function (f) { document.fonts.load(f).catch(function () {}); });
+  }
+
+  function buildSummaryPng(m) {
+    const W = 1080, H = 1350, P = 72;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const sans = '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+    const rounded = '"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace';
+    const ink = '#111111', ink2 = 'rgba(0,0,0,0.6)', tint = '#111111', cardBg = '#fafaf8';
+    const up = m.diff >= 0;
+
+    ctx.fillStyle = '#f5f4f0';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'alphabetic';
+
+    ctx.fillStyle = ink;
+    const markScale = 0.5;
+    JSL_MARK.forEach(function (r) {
+      ctx.fillRect(P + (r[0] - 16) * markScale, 82 + (r[1] - 51) * markScale, 8 * markScale, 8 * markScale);
+    });
+    ctx.fillStyle = ink2;
+    ctx.font = '500 26px ' + rounded;
+    ctx.fillText('JS LABS · ANTHROPIC EMPLOYEE WEALTH', P + 96, 116);
+
+    ctx.fillStyle = ink;
+    ctx.font = '600 140px ' + rounded;
+    ctx.fillText(formatPrice(m.price), P - 6, 270);
+
+    const deltaText = m.isBaseline ? 'IPO baseline · ' + AS_OF : formatDelta(m) + ' · ' + AS_OF;
+    ctx.font = '600 32px ' + sans;
+    const dw = ctx.measureText(deltaText).width + 40;
+    ctx.fillStyle = m.isBaseline ? 'rgba(0,0,0,0.05)' : up ? 'rgba(47,107,58,0.12)' : 'rgba(163,50,42,0.1)';
+    roundRect(ctx, P, 306, dw, 56, 14);
+    ctx.fill();
+    ctx.fillStyle = m.isBaseline ? ink2 : up ? '#2f6b3a' : '#a3322a';
+    ctx.fillText(deltaText, P + 20, 345);
+
+    const kpis = [
+      ['Employees', HEADCOUNT.toLocaleString('en-US'), 'LIVE · S-1'],
+      ['Millionaires', (m.isBaseline ? '' : '~') + m.count1m.toLocaleString('en-US'), m.pct1m + '% of staff'],
+      ['Average paper', formatMillions(m.avgPaperM), 'Highly skewed'],
+      ['Centi-millionaires', '~' + m.count100m.toLocaleString('en-US'), m.pct100m + '% · non-founders']
+    ];
+    const gap = 24, cw = (W - P * 2 - gap) / 2, ch = 210, ky = 400;
+    kpis.forEach(function (k, i) {
+      const x = P + (i % 2) * (cw + gap);
+      const y = ky + Math.floor(i / 2) * (ch + gap);
+      ctx.fillStyle = cardBg;
+      roundRect(ctx, x, y, cw, ch, 32);
+      ctx.fill();
+      ctx.fillStyle = ink2;
+      ctx.font = '600 28px ' + sans;
+      ctx.fillText(k[0], x + 32, y + 58);
+      ctx.fillStyle = ink;
+      ctx.font = '600 66px ' + rounded;
+      ctx.fillText(k[1], x + 30, y + 140);
+      ctx.fillStyle = ink2;
+      ctx.font = '400 26px ' + sans;
+      ctx.fillText(k[2], x + 32, y + 182);
+    });
+
+    const ty = ky + ch * 2 + gap + 32;
+    const th = 330;
+    ctx.fillStyle = cardBg;
+    roundRect(ctx, P, ty, W - P * 2, th, 32);
+    ctx.fill();
+    ctx.fillStyle = ink;
+    ctx.font = '700 34px ' + sans;
+    ctx.fillText('Wealth tiers', P + 32, ty + 62);
+    ctx.fillStyle = ink2;
+    ctx.font = '400 24px ' + sans;
+    ctx.textAlign = 'right';
+    ctx.fillText('Employee equity ~' + formatBillions(m.totalEquityB), W - P - 32, ty + 62);
+    ctx.textAlign = 'left';
+
+    [['Over $100M', m.count100m, m.pct100m], ['Over $10M', m.count10m, m.pct10m], ['Over $1M', m.count1m, m.pct1m]].forEach(function (t, i) {
+      const ry = ty + 128 + i * 76;
+      const bx = P + 32, bw = W - P * 2 - 64;
+      ctx.fillStyle = ink;
+      ctx.font = '500 30px ' + sans;
+      ctx.fillText(t[0], bx, ry);
+      ctx.textAlign = 'right';
+      ctx.font = '600 30px ' + sans;
+      ctx.fillText('~' + t[1].toLocaleString('en-US') + '  ·  ' + t[2] + '%', bx + bw, ry);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      roundRect(ctx, bx, ry + 16, bw, 10, 5);
+      ctx.fill();
+      ctx.fillStyle = tint;
+      roundRect(ctx, bx, ry + 16, Math.max(10, (bw * t[2]) / 100), 10, 5);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = ink2;
+    ctx.font = '400 24px ' + sans;
+    ctx.fillText('Paper valuations. ' + (m.isBaseline ? 'Tiers: Hill estimates.' : 'Tiers modeled from Hill $83 baseline.'), P, H - 96);
+    ctx.fillText('Sources: Anthropic S-1, Hill.com, CNBC, Reuters', P, H - 58);
+    ctx.fillStyle = ink;
+    ctx.font = '500 24px ' + rounded;
+    ctx.textAlign = 'right';
+    ctx.fillText('JSLABS.XYZ', W - P, H - 58);
+    ctx.textAlign = 'left';
+
+    const dataUrl = canvas.toDataURL('image/png');
+    const bin = atob(dataUrl.split(',')[1]);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: 'image/png' });
+  }
+
+  function shareLink(m) {
+    const url = shareUrl(m);
+    const title = 'Anthropic employee wealth at ' + formatPrice(m.price);
+    if (navigator.share) {
+      navigator.share({ title: title, text: title, url: url }).catch(function (err) {
+        if (err && err.name !== 'AbortError') copyText(url);
+      });
+      return;
+    }
+    copyText(url);
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { showToast('Link copied'); }, function () { showToast('Copy failed'); });
+    } else {
+      showToast('Copy not supported');
+    }
+  }
+
+  const actions = {
+    link: function () { shareLink(model); },
+    image: function () {
+      deliverFile(buildSummaryPng(model), fileSlug(model) + '.png', 'Anthropic employee wealth');
+    },
+    csv: function () {
+      deliverFile(new Blob([buildCsv(model)], { type: 'text/csv;charset=utf-8' }), fileSlug(model) + '.csv', 'Anthropic employee wealth (CSV)');
+    },
+    json: function () {
+      deliverFile(new Blob([buildJson(model)], { type: 'application/json' }), fileSlug(model) + '.json', 'Anthropic employee wealth (JSON)');
+    },
+    pdf: function () { setTimeout(function () { window.print(); }, 350); },
+    cancel: function () {}
+  };
+
+  const supportsDialog = typeof els.sheet.showModal === 'function';
+  function openSheet() {
+    if (document.activeElement === els.input) els.input.blur();
+    if (supportsDialog) els.sheet.showModal();
+    else els.sheet.setAttribute('open', '');
+  }
+  function closeSheet() {
+    if (supportsDialog) els.sheet.close();
+    else els.sheet.removeAttribute('open');
+  }
+
+  els.shareBtn.addEventListener('click', openSheet);
+  els.sheet.addEventListener('click', function (e) {
+    if (e.target === els.sheet) { closeSheet(); return; }
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    closeSheet();
+    const fn = actions[btn.getAttribute('data-action')];
+    if (fn) fn();
+  });
+
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  els.installTip.hidden = !(isIOS && !isStandalone);
+
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  }
+
+  const initialParam = new URLSearchParams(window.location.search).get('price');
   const initialPrice = initialParam !== null ? parseInput(initialParam) : null;
   render(initialPrice !== null ? initialPrice : IPO_PRICE, { syncUrl: false });
 })();

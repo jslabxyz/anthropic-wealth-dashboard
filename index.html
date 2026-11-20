@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Anthropic Employee Wealth | JS Labs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -11,8 +11,13 @@
   --paper: #f5f4f0;
   --ink: #111111;
   --ink-60: rgba(17,17,17,0.6);
+  --ink-12: rgba(17,17,17,0.12);
   --ink-07: rgba(17,17,17,0.07);
   --border: rgba(17,17,17,0.12);
+  --pos-text: #146c43;
+  --pos-bg: #edf7f1;
+  --neg-text: #b42318;
+  --neg-bg: #fef3f2;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -20,86 +25,321 @@ body {
   color: var(--ink);
   font-family: 'Geist', system-ui, sans-serif;
   line-height: 1.5;
-  padding: 2.5rem 1.5rem;
+  padding: 1.5rem 1rem 2.5rem;
   max-width: 1100px;
   margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
 }
 header {
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
 }
 h1 {
   font-family: 'IBM Plex Sans', sans-serif;
   font-weight: 500;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 .sub {
   color: var(--ink-60);
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
+}
+.price-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.125rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.price-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.875rem;
+}
+.price-label {
+  font-size: 0.75rem;
+  color: var(--ink-60);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+.delta-pill {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ink-07);
+  color: var(--ink-60);
+  font-variant-numeric: tabular-nums;
+}
+.delta-pill.positive {
+  background: var(--pos-bg);
+  color: var(--pos-text);
+}
+.delta-pill.negative {
+  background: var(--neg-bg);
+  color: var(--neg-text);
+}
+.price-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.price-field {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 0.875rem;
+  min-height: 48px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.price-field:focus-within {
+  border-color: var(--ink);
+  background: white;
+}
+.currency-prefix {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--ink-60);
+  margin-right: 0.25rem;
+  user-select: none;
+}
+.price-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.375rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  padding: 0.5rem 0;
+}
+.step-btn, .reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.125rem;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.step-btn:hover, .reset-btn:hover {
+  background: var(--paper);
+  border-color: rgba(17,17,17,0.28);
+}
+.step-btn:active, .reset-btn:active {
+  background: var(--ink-07);
+}
+.reset-btn {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  padding: 0 0.875rem;
+  color: var(--ink-60);
+}
+.reset-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.reset-btn:disabled:hover {
+  background: white;
+  border-color: var(--border);
+}
+.slider-wrap {
+  margin-bottom: 1rem;
+}
+.price-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.price-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ink-07);
+}
+.price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(17,17,17,0.28);
+  margin-top: -9px;
+}
+.price-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ink-07);
+}
+.price-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(17,17,17,0.28);
+}
+.slider-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--ink-60);
+  margin-top: -0.15rem;
+}
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--ink);
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.preset-btn:hover {
+  background: var(--paper);
+}
+.preset-btn.active {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+.preset-btn span {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 0.75rem;
+  opacity: 0.72;
+  margin-left: 0.35rem;
 }
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2rem;
 }
 .kpi {
   background: white;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.125rem;
 }
 .kpi-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--ink-60);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
 }
 .kpi-value {
   font-family: 'Geist Mono', monospace;
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 .kpi-note {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--ink-60);
   margin-top: 0.25rem;
+  line-height: 1.35;
 }
 section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 h2 {
   font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 500;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+}
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }
 table {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
 }
 th, td {
   text-align: left;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.625rem;
   border-bottom: 1px solid var(--ink-07);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  vertical-align: top;
+}
+tr:last-child td {
+  border-bottom: none;
 }
 th {
   font-weight: 500;
   color: var(--ink-60);
   background: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+}
+.mono {
+  font-family: 'Geist Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pct-cell {
+  min-width: 72px;
+}
+.bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--ink-07);
+  border-radius: 4px;
+  margin-top: 0.35rem;
+  overflow: hidden;
 }
 .bar {
-  height: 8px;
+  height: 100%;
   background: var(--ink);
   border-radius: 4px;
-  margin-top: 0.25rem;
+  transition: width 0.2s ease;
 }
 .caveats {
   font-size: 0.8125rem;
@@ -107,106 +347,618 @@ th {
   background: white;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+  padding: 1.125rem 1.25rem 1.125rem 2rem;
 }
 .caveats li { margin-bottom: 0.5rem; }
+.caveats li:last-child { margin-bottom: 0; }
 .tag { font-size: 0.7rem; color: var(--ink-60); }
 footer {
-  margin-top: 3rem;
+  margin-top: 2.5rem;
   font-size: 0.75rem;
   color: var(--ink-60);
   border-top: 1px solid var(--border);
   padding-top: 1rem;
+}
+
+@media (min-width: 700px) {
+  body {
+    padding: 2.5rem 1.5rem;
+  }
+  header {
+    margin-bottom: 2rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+  }
+  .price-card {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .kpi {
+    padding: 1.25rem 1.5rem;
+  }
+  .kpi-label {
+    font-size: 0.75rem;
+  }
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+  .kpi-note {
+    font-size: 0.75rem;
+  }
+  section {
+    margin-bottom: 2.5rem;
+  }
+  h2 {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+  }
+  th, td {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  .caveats {
+    padding: 1.25rem 1.5rem 1.25rem 2.25rem;
+  }
 }
 </style>
 </head>
 <body>
 <header>
   <h1>Anthropic employee wealth</h1>
-  <p class="sub">Paper valuations at $83 IPO price · 19 November 2026 · JS Labs</p>
+  <p class="sub" id="header-sub">Paper valuations at $83 IPO price · 19 November 2026 · JS Labs</p>
 </header>
 
-<div class="kpi-grid">
-  <div class="kpi">
-    <div class="kpi-label">Employees</div>
-    <div class="kpi-value">5,300</div>
-    <div class="kpi-note">LIVE · S-1 30 Sep 2026</div>
+<section class="price-card" aria-label="Share price controls">
+  <div class="price-card-top">
+    <label class="price-label" for="share-price-input">Latest share price</label>
+    <span class="delta-pill" id="price-delta" aria-live="polite">IPO baseline ($83)</span>
   </div>
-  <div class="kpi">
-    <div class="kpi-label">Millionaires</div>
-    <div class="kpi-value">5,100</div>
-    <div class="kpi-note">96% · ESTIMATED Hill</div>
+  <div class="price-input-row">
+    <div class="price-field">
+      <span class="currency-prefix" aria-hidden="true">$</span>
+      <input
+        id="share-price-input"
+        class="price-input"
+        type="text"
+        inputmode="decimal"
+        value="83.00"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Latest share price in USD"
+      >
+    </div>
+    <button type="button" class="step-btn" id="step-down" aria-label="Decrease share price by 1 dollar">−</button>
+    <button type="button" class="step-btn" id="step-up" aria-label="Increase share price by 1 dollar">+</button>
+    <button type="button" class="reset-btn" id="reset-price" disabled>Reset</button>
   </div>
-  <div class="kpi">
-    <div class="kpi-label">Average paper</div>
-    <div class="kpi-value">$44M</div>
-    <div class="kpi-note">ESTIMATED · highly skewed</div>
+  <div class="slider-wrap">
+    <input
+      id="share-price-slider"
+      class="price-slider"
+      type="range"
+      min="10"
+      max="250"
+      step="0.5"
+      value="83"
+      aria-label="Slide to adjust share price"
+    >
+    <div class="slider-scale" aria-hidden="true">
+      <span>$10</span>
+      <span>$83 IPO</span>
+      <span>$150</span>
+      <span>$250</span>
+    </div>
   </div>
-  <div class="kpi">
-    <div class="kpi-label">Centi-millionaires</div>
-    <div class="kpi-value">~600</div>
-    <div class="kpi-note">ESTIMATED Hill · non-founders</div>
-  </div>
-</div>
-
-<section>
-  <h2>Wealth tiers</h2>
-  <table>
-    <thead>
-      <tr><th>Tier</th><th>Employees</th><th>%</th><th>Source</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>> $100M</td><td>~600</td><td>11%</td><td>ESTIMATED Hill</td></tr>
-      <tr><td>> $10M</td><td>~2,800</td><td>53%</td><td>ESTIMATED Hill</td></tr>
-      <tr><td>> $1M</td><td>~5,100</td><td>96%</td><td>ESTIMATED Hill</td></tr>
-      <tr><td>Total</td><td>5,300</td><td>100%</td><td>LIVE S-1</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Cohort concentration</h2>
-  <table>
-    <thead>
-      <tr><th>Cohort</th><th>Approx size</th><th>Equity type</th><th>Notes</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Pre-2025</td><td>~1,000</td><td>Low-strike options</td><td>Hold bulk of ~$133B net option value. Many nine-figure stakes.</td></tr>
-      <tr><td>2025–2026</td><td>~4,300</td><td>Mostly RSUs</td><td>Average ~$20M. Later grants at higher valuations.</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Equity pools at $83</h2>
-  <table>
-    <thead>
-      <tr><th>Pool</th><th>Value</th><th>Notes</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Employee equity (options + RSUs)</td><td>~$232B</td><td>ESTIMATED from filings + CNBC. Avg $44M.</td></tr>
-      <tr><td>Options intrinsic (net of $2.91 strike)</td><td>~$133–142B</td><td>1.77B shares. $119B paper gains as of 30 Sep.</td></tr>
-      <tr><td>RSUs</td><td>~$84–89B</td><td>~1.1B shares.</td></tr>
-      <tr><td>Founders (separate)</td><td>~$140B</td><td>7 × ~$20B each. Not in employee totals.</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<section>
-  <h2>Caveats</h2>
-  <div class="caveats">
-    <ul>
-      <li>All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.</li>
-      <li>Vesting, staggered lock-ups (up to 10% sellable day one for non-founders), and taxes will reduce realised cash.</li>
-      <li>Distribution is highly skewed by tenure. Early low-strike options dominate value. Later hires hold smaller RSU grants.</li>
-      <li>Hill and Sacra estimates are model-based on public filings. Not official company figures.</li>
-      <li>Headcount is as of 30 September 2026. Current headcount may differ.</li>
-    </ul>
+  <div class="presets" role="group" aria-label="Share price presets">
+    <button type="button" class="preset-btn active" data-price="83">$83<span>IPO</span></button>
+    <button type="button" class="preset-btn" data-price="97.17">$97.17<span>Day-1</span></button>
+    <button type="button" class="preset-btn" data-price="120">$120</button>
+    <button type="button" class="preset-btn" data-price="150">$150</button>
+    <button type="button" class="preset-btn" data-price="200">$200</button>
   </div>
 </section>
+
+<main>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Employees</div>
+      <div class="kpi-value">5,300</div>
+      <div class="kpi-note">LIVE · S-1 30 Sep 2026</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Millionaires</div>
+      <div class="kpi-value" id="kpi-millionaires">5,100</div>
+      <div class="kpi-note" id="kpi-millionaires-note">96% · ESTIMATED Hill</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Average paper</div>
+      <div class="kpi-value" id="kpi-avg">$44M</div>
+      <div class="kpi-note" id="kpi-avg-note">ESTIMATED · highly skewed</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Centi-millionaires</div>
+      <div class="kpi-value" id="kpi-centi">~600</div>
+      <div class="kpi-note" id="kpi-centi-note">ESTIMATED Hill · non-founders</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Wealth tiers</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Employees</th><th>%</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">&gt; $100M</td>
+            <td class="mono" id="tier-100m-count">~600</td>
+            <td class="pct-cell">
+              <span class="mono" id="tier-100m-pct">11%</span>
+              <div class="bar-track"><div class="bar" id="tier-100m-bar" style="width: 11%"></div></div>
+            </td>
+            <td id="tier-100m-src">ESTIMATED Hill</td>
+          </tr>
+          <tr>
+            <td class="mono">&gt; $10M</td>
+            <td class="mono" id="tier-10m-count">~2,800</td>
+            <td class="pct-cell">
+              <span class="mono" id="tier-10m-pct">53%</span>
+              <div class="bar-track"><div class="bar" id="tier-10m-bar" style="width: 53%"></div></div>
+            </td>
+            <td id="tier-10m-src">ESTIMATED Hill</td>
+          </tr>
+          <tr>
+            <td class="mono">&gt; $1M</td>
+            <td class="mono" id="tier-1m-count">~5,100</td>
+            <td class="pct-cell">
+              <span class="mono" id="tier-1m-pct">96%</span>
+              <div class="bar-track"><div class="bar" id="tier-1m-bar" style="width: 96%"></div></div>
+            </td>
+            <td id="tier-1m-src">ESTIMATED Hill</td>
+          </tr>
+          <tr>
+            <td>Total</td>
+            <td class="mono">5,300</td>
+            <td class="pct-cell">
+              <span class="mono">100%</span>
+              <div class="bar-track"><div class="bar" style="width: 100%"></div></div>
+            </td>
+            <td>LIVE S-1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cohort concentration</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Cohort</th><th>Approx size</th><th>Equity type</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">Pre-2025</td>
+            <td class="mono">~1,000</td>
+            <td>Low-strike options</td>
+            <td id="cohort-pre2025-note">Hold bulk of ~$133B net option value. Many nine-figure stakes.</td>
+          </tr>
+          <tr>
+            <td class="mono">2025–2026</td>
+            <td class="mono">~4,300</td>
+            <td>Mostly RSUs</td>
+            <td id="cohort-2025-note">Average ~$20M. Later grants at higher valuations.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="pools-heading">Equity pools at $83</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Pool</th><th>Value</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Employee equity (options + RSUs)</td>
+            <td class="mono" id="pool-total-val">~$232B</td>
+            <td id="pool-total-note">ESTIMATED from filings + CNBC. Avg $44M.</td>
+          </tr>
+          <tr>
+            <td>Options intrinsic (net of $2.91 strike)</td>
+            <td class="mono" id="pool-options-val">~$133–142B</td>
+            <td>1.77B shares. $119B paper gains as of 30 Sep.</td>
+          </tr>
+          <tr>
+            <td>RSUs</td>
+            <td class="mono" id="pool-rsus-val">~$84–89B</td>
+            <td>~1.1B shares.</td>
+          </tr>
+          <tr>
+            <td>Founders (separate)</td>
+            <td class="mono" id="pool-founders-val">~$140B</td>
+            <td id="pool-founders-note">7 × ~$20B each. Not in employee totals.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Caveats</h2>
+    <div class="caveats">
+      <ul>
+        <li id="caveat-price">All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.</li>
+        <li>Options intrinsic value scales with max(0, share price − $2.91 avg strike); RSUs and founder stakes scale linearly. Wealth tier counts away from $83 are log-normally modeled from the Hill $83 baseline.</li>
+        <li>Vesting, staggered lock-ups (up to 10% sellable day one for non-founders), and taxes will reduce realised cash.</li>
+        <li>Distribution is highly skewed by tenure. Early low-strike options dominate value. Later hires hold smaller RSU grants.</li>
+        <li>Hill and Sacra estimates are model-based on public filings. Not official company figures.</li>
+        <li>Headcount is as of 30 September 2026. Current headcount may differ.</li>
+      </ul>
+    </div>
+  </section>
+</main>
 
 <footer>
   Sources: Anthropic S-1 (LIVE headcount, option counts), Hill.com (ESTIMATED tiers), CNBC / Reuters (totals). Built by JS Labs.
 </footer>
+
+<script>
+(function () {
+  const IPO_PRICE = 83;
+  const DAY_ONE_CLOSE = 97.17;
+  const AVG_STRIKE = 2.91;
+  const HEADCOUNT = 5300;
+  const IPO_OPTION_INTRINSIC = IPO_PRICE - AVG_STRIKE; // 80.09
+
+  // Baseline values at $83 IPO
+  const BASE_OPT_LOW = 133;
+  const BASE_OPT_HIGH = 142;
+  const BASE_RSU_LOW = 84;
+  const BASE_RSU_HIGH = 89;
+  const BASE_TOTAL_OPT = 142;
+  const BASE_TOTAL_RSU = 90;
+  const BASE_TOTAL_EQUITY = 232;
+  const BASE_FOUNDERS = 140;
+  const BASE_COHORT_PRE2025 = 133;
+  const BASE_COHORT_2025_AVG = 20;
+
+  // Log-normal anchors matched to exact Hill estimates at $83:
+  // 600 / 5300 (11.32%), 2800 / 5300 (52.83%), 5100 / 5300 (96.23%)
+  const Z_100M = 1.20969;
+  const Z_10M = -0.07100;
+  const Z_1M = -1.77758;
+  const LN_10 = Math.LN10;
+  const SLOPE_HIGH = (Z_100M - Z_10M) / LN_10;
+  const SLOPE_LOW = (Z_10M - Z_1M) / LN_10;
+
+  const els = {
+    headerSub: document.getElementById('header-sub'),
+    priceDelta: document.getElementById('price-delta'),
+    input: document.getElementById('share-price-input'),
+    slider: document.getElementById('share-price-slider'),
+    stepDown: document.getElementById('step-down'),
+    stepUp: document.getElementById('step-up'),
+    resetBtn: document.getElementById('reset-price'),
+    presets: Array.from(document.querySelectorAll('.preset-btn')),
+    kpiMillionaires: document.getElementById('kpi-millionaires'),
+    kpiMillionairesNote: document.getElementById('kpi-millionaires-note'),
+    kpiAvg: document.getElementById('kpi-avg'),
+    kpiAvgNote: document.getElementById('kpi-avg-note'),
+    kpiCenti: document.getElementById('kpi-centi'),
+    kpiCentiNote: document.getElementById('kpi-centi-note'),
+    tier100mCount: document.getElementById('tier-100m-count'),
+    tier100mPct: document.getElementById('tier-100m-pct'),
+    tier100mBar: document.getElementById('tier-100m-bar'),
+    tier100mSrc: document.getElementById('tier-100m-src'),
+    tier10mCount: document.getElementById('tier-10m-count'),
+    tier10mPct: document.getElementById('tier-10m-pct'),
+    tier10mBar: document.getElementById('tier-10m-bar'),
+    tier10mSrc: document.getElementById('tier-10m-src'),
+    tier1mCount: document.getElementById('tier-1m-count'),
+    tier1mPct: document.getElementById('tier-1m-pct'),
+    tier1mBar: document.getElementById('tier-1m-bar'),
+    tier1mSrc: document.getElementById('tier-1m-src'),
+    cohortPre2025Note: document.getElementById('cohort-pre2025-note'),
+    cohort2025Note: document.getElementById('cohort-2025-note'),
+    poolsHeading: document.getElementById('pools-heading'),
+    poolTotalVal: document.getElementById('pool-total-val'),
+    poolTotalNote: document.getElementById('pool-total-note'),
+    poolOptionsVal: document.getElementById('pool-options-val'),
+    poolRsusVal: document.getElementById('pool-rsus-val'),
+    poolFoundersVal: document.getElementById('pool-founders-val'),
+    poolFoundersNote: document.getElementById('pool-founders-note'),
+    caveatPrice: document.getElementById('caveat-price')
+  };
+
+  function normCdf(z) {
+    const t = 1 / (1 + 0.2316419 * Math.abs(z));
+    const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+    const p =
+      d *
+      t *
+      (0.31938153 +
+        t *
+          (-0.356563782 +
+            t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+    return z > 0 ? 1 - p : p;
+  }
+
+  function formatPrice(price) {
+    const rounded = Math.round(price * 100) / 100;
+    return Number.isInteger(rounded) ? '$' + rounded.toLocaleString('en-US') : '$' + rounded.toFixed(2);
+  }
+
+  function formatBillions(val) {
+    if (val <= 0) return '$0B';
+    if (val < 10) return '$' + val.toFixed(1) + 'B';
+    return '$' + Math.round(val).toLocaleString('en-US') + 'B';
+  }
+
+  function formatBillionsRange(low, high) {
+    if (high <= 0) return '$0B';
+    if (high < 10) return '~$' + low.toFixed(1) + '–' + high.toFixed(1) + 'B';
+    return '~$' + Math.round(low).toLocaleString('en-US') + '–' + Math.round(high).toLocaleString('en-US') + 'B';
+  }
+
+  function formatMillions(val) {
+    if (val <= 0) return '$0M';
+    if (val < 1) return '$' + Math.round(val * 1000) + 'K';
+    if (val < 10) return '$' + val.toFixed(1) + 'M';
+    return '$' + Math.round(val).toLocaleString('en-US') + 'M';
+  }
+
+  function roundHeadcount(raw) {
+    const clamped = Math.max(0, Math.min(HEADCOUNT, raw));
+    if (clamped >= 1000) return Math.min(HEADCOUNT, Math.round(clamped / 50) * 50);
+    if (clamped >= 100) return Math.round(clamped / 10) * 10;
+    if (clamped >= 10) return Math.round(clamped / 5) * 5;
+    return Math.round(clamped);
+  }
+
+  function estimateTierCount(thresholdMillions, equityMultiplier) {
+    if (equityMultiplier <= 0) return 0;
+    const equivThreshold = thresholdMillions / equityMultiplier;
+    const logRatio = Math.log(equivThreshold / 10);
+    const z = equivThreshold >= 10 ? Z_10M + logRatio * SLOPE_HIGH : Z_10M + logRatio * SLOPE_LOW;
+    const prob = 1 - normCdf(z);
+    return roundHeadcount(prob * HEADCOUNT);
+  }
+
+  let currentPrice = IPO_PRICE;
+
+  function render(price, options) {
+    const syncInput = !options || options.syncInput !== false;
+    const syncUrl = !options || options.syncUrl !== false;
+
+    const clamped = Math.max(0, Math.min(10000, Number.isFinite(price) ? price : IPO_PRICE));
+    currentPrice = Math.round(clamped * 100) / 100;
+
+    const isBaseline = Math.abs(currentPrice - IPO_PRICE) < 0.005;
+    const isDayOne = Math.abs(currentPrice - DAY_ONE_CLOSE) < 0.005;
+
+    const optFactor = Math.max(0, currentPrice - AVG_STRIKE) / IPO_OPTION_INTRINSIC;
+    const rsuFactor = currentPrice / IPO_PRICE;
+
+    const totalEquityB = BASE_TOTAL_OPT * optFactor + BASE_TOTAL_RSU * rsuFactor;
+    const equityMultiplier = totalEquityB / BASE_TOTAL_EQUITY;
+    const avgPaperM = (totalEquityB * 1000) / HEADCOUNT;
+    const baseAvgM = (BASE_TOTAL_EQUITY * 1000) / HEADCOUNT;
+
+    const optLowB = BASE_OPT_LOW * optFactor;
+    const optHighB = BASE_OPT_HIGH * optFactor;
+    const rsuLowB = BASE_RSU_LOW * rsuFactor;
+    const rsuHighB = BASE_RSU_HIGH * rsuFactor;
+    const foundersB = BASE_FOUNDERS * rsuFactor;
+    const perFounderB = foundersB / 7;
+    const cohortPre2025B = BASE_COHORT_PRE2025 * optFactor;
+    const cohort2025AvgM = BASE_COHORT_2025_AVG * rsuFactor;
+
+    let count100m, count10m, count1m;
+    if (isBaseline) {
+      count100m = 600;
+      count10m = 2800;
+      count1m = 5100;
+    } else {
+      count100m = estimateTierCount(100, equityMultiplier);
+      count10m = Math.max(count100m, estimateTierCount(10, equityMultiplier));
+      count1m = Math.max(count10m, estimateTierCount(1, equityMultiplier));
+    }
+
+    const pct100m = Math.round((count100m / HEADCOUNT) * 100);
+    const pct10m = Math.round((count10m / HEADCOUNT) * 100);
+    const pct1m = Math.round((count1m / HEADCOUNT) * 100);
+
+    const priceStr = formatPrice(currentPrice);
+    const diff = currentPrice - IPO_PRICE;
+    const diffPct = (diff / IPO_PRICE) * 100;
+    const sign = diff > 0 ? '+' : '';
+
+    // Sync controls
+    if (syncInput) {
+      els.input.value = currentPrice.toFixed(2);
+    }
+    els.slider.value = String(Math.max(10, Math.min(250, currentPrice)));
+    els.resetBtn.disabled = isBaseline;
+
+    els.presets.forEach(function (btn) {
+      const p = parseFloat(btn.getAttribute('data-price'));
+      btn.classList.toggle('active', Math.abs(p - currentPrice) < 0.005);
+    });
+
+    // Delta pill & header subtitle
+    if (isBaseline) {
+      els.priceDelta.textContent = 'IPO baseline';
+      els.priceDelta.className = 'delta-pill';
+      els.headerSub.textContent = 'Paper valuations at $83 IPO price · 19 November 2026 · JS Labs';
+    } else {
+      els.priceDelta.textContent =
+        (diff > 0 ? '+$' : '-$') +
+        Math.abs(diff).toFixed(2) +
+        ' (' +
+        sign +
+        diffPct.toFixed(1) +
+        '%)';
+      els.priceDelta.className = 'delta-pill ' + (diff > 0 ? 'positive' : 'negative');
+      const context = isDayOne
+        ? 'day-one close'
+        : sign + diffPct.toFixed(1) + '% vs $83 IPO';
+      els.headerSub.textContent =
+        'Paper valuations at ' + priceStr + ' (' + context + ') · 19 November 2026 · JS Labs';
+    }
+
+    // KPIs
+    els.kpiMillionaires.textContent = (isBaseline ? '' : '~') + count1m.toLocaleString('en-US');
+    els.kpiMillionairesNote.textContent =
+      pct1m + '% · ' + (isBaseline ? 'ESTIMATED Hill' : 'MODELED from Hill');
+
+    els.kpiAvg.textContent = formatMillions(avgPaperM);
+    if (isBaseline) {
+      els.kpiAvgNote.textContent = 'ESTIMATED · highly skewed';
+    } else {
+      const avgDiff = avgPaperM - baseAvgM;
+      const avgSign = avgDiff >= 0 ? '+' : '-';
+      els.kpiAvgNote.textContent =
+        avgSign + formatMillions(Math.abs(avgDiff)) + ' vs IPO · highly skewed';
+    }
+
+    els.kpiCenti.textContent = '~' + count100m.toLocaleString('en-US');
+    els.kpiCentiNote.textContent =
+      (isBaseline ? 'ESTIMATED Hill' : pct100m + '% · MODELED') + ' · non-founders';
+
+    // Wealth tiers table
+    const tierSource = isBaseline ? 'ESTIMATED Hill' : 'MODELED (Hill $83)';
+    els.tier100mCount.textContent = '~' + count100m.toLocaleString('en-US');
+    els.tier100mPct.textContent = pct100m + '%';
+    els.tier100mBar.style.width = pct100m + '%';
+    els.tier100mSrc.textContent = tierSource;
+
+    els.tier10mCount.textContent = '~' + count10m.toLocaleString('en-US');
+    els.tier10mPct.textContent = pct10m + '%';
+    els.tier10mBar.style.width = pct10m + '%';
+    els.tier10mSrc.textContent = tierSource;
+
+    els.tier1mCount.textContent = '~' + count1m.toLocaleString('en-US');
+    els.tier1mPct.textContent = pct1m + '%';
+    els.tier1mBar.style.width = pct1m + '%';
+    els.tier1mSrc.textContent = tierSource;
+
+    // Cohort concentration
+    els.cohortPre2025Note.textContent =
+      'Hold bulk of ~' +
+      formatBillions(cohortPre2025B) +
+      ' net option value. Many nine-figure stakes.';
+    els.cohort2025Note.textContent =
+      'Average ~' +
+      formatMillions(cohort2025AvgM) +
+      '. Later grants at higher valuations.';
+
+    // Equity pools
+    els.poolsHeading.textContent = 'Equity pools at ' + priceStr;
+    els.poolTotalVal.textContent = '~' + formatBillions(totalEquityB);
+    els.poolTotalNote.textContent =
+      'ESTIMATED from filings + CNBC. Avg ' + formatMillions(avgPaperM) + '.';
+    els.poolOptionsVal.textContent = formatBillionsRange(optLowB, optHighB);
+    els.poolRsusVal.textContent = formatBillionsRange(rsuLowB, rsuHighB);
+    els.poolFoundersVal.textContent = '~' + formatBillions(foundersB);
+    els.poolFoundersNote.textContent =
+      '7 × ~' + formatBillions(perFounderB) + ' each. Not in employee totals.';
+
+    // Caveat
+    if (isBaseline) {
+      els.caveatPrice.textContent =
+        'All employee figures are paper valuations at the $83 IPO price. Day-one close was $97.17.';
+    } else {
+      els.caveatPrice.textContent =
+        'All employee figures are paper valuations recalculated at ' +
+        priceStr +
+        ' per share (IPO price was $83; day-one close was $97.17).';
+    }
+
+    // Reflect price in URL query param without polluting browser history
+    if (syncUrl && window.history && window.history.replaceState) {
+      const url = new URL(window.location.href);
+      if (isBaseline) {
+        url.searchParams.delete('price');
+      } else {
+        url.searchParams.set('price', Number.isInteger(currentPrice) ? String(currentPrice) : currentPrice.toFixed(2));
+      }
+      window.history.replaceState(null, '', url.toString());
+    }
+  }
+
+  function parseInput(raw) {
+    const cleaned = String(raw).replace(/[^0-9.]/g, '');
+    if (!cleaned) return null;
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  els.input.addEventListener('input', function () {
+    const val = parseInput(els.input.value);
+    if (val !== null) {
+      render(val, { syncInput: false });
+    }
+  });
+
+  els.input.addEventListener('blur', function () {
+    const val = parseInput(els.input.value);
+    render(val !== null ? val : currentPrice, { syncInput: true });
+  });
+
+  els.input.addEventListener('keydown', function (e) {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter') {
+      els.input.blur();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      render(currentPrice + (e.shiftKey ? 5 : 1));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      render(Math.max(0, currentPrice - (e.shiftKey ? 5 : 1)));
+    }
+  });
+
+  els.slider.addEventListener('input', function () {
+    render(parseFloat(els.slider.value));
+  });
+
+  els.stepDown.addEventListener('click', function () {
+    render(Math.max(0, Math.round((currentPrice - 1) * 100) / 100));
+  });
+
+  els.stepUp.addEventListener('click', function () {
+    render(Math.round((currentPrice + 1) * 100) / 100);
+  });
+
+  els.resetBtn.addEventListener('click', function () {
+    render(IPO_PRICE);
+  });
+
+  els.presets.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const p = parseFloat(btn.getAttribute('data-price'));
+      if (Number.isFinite(p)) render(p);
+    });
+  });
+
+  // Support deep linking via ?price=97.17
+  const params = new URLSearchParams(window.location.search);
+  const initialParam = params.get('price');
+  const initialPrice = initialParam !== null ? parseInput(initialParam) : null;
+  render(initialPrice !== null ? initialPrice : IPO_PRICE, { syncUrl: false });
+})();
+</script>
 </body>
 </html>
